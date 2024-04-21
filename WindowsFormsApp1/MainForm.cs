@@ -9,7 +9,7 @@ using System.Windows.Forms.DataVisualization.Charting;
 
 namespace WindowsFormsApp1
 {
-    public partial class Form1 : Form
+    public partial class MainForm : Form
     {
         private Bitmap bitmap;
         private PictureBox pictureBox;
@@ -21,7 +21,7 @@ namespace WindowsFormsApp1
         private Button buttonDisplayGraph;
         private SplitContainer splitContainer;
 
-        public Form1()
+        public MainForm()
         {
             InitializeComponent();
 
@@ -149,6 +149,25 @@ namespace WindowsFormsApp1
 
         private void ButtonLoadImage_Click(object sender, EventArgs e)
         {
+            // Проверяем, что `cameraTimer` и `currentFrame` не равны `null`
+            if (cameraTimer != null && currentFrame != null)
+            {
+                // Останавливаем таймер, чтобы прекратить захват изображений с камеры
+                cameraTimer.Stop();
+
+                pictureBox.Image = null;
+
+            }
+            // Очистка PictureBox перед загрузкой нового изображения
+            pictureBox.Image = null;
+
+            // Освобождение ресурсов старого изображения
+            if (bitmap != null)
+            {
+                bitmap.Dispose();
+                bitmap = null;
+            }
+
             // Диалог выбора файла для загрузки изображения
             OpenFileDialog openFileDialog = new OpenFileDialog
             {
