@@ -2,7 +2,6 @@
 using OpenCvSharp.Extensions;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
@@ -27,11 +26,9 @@ namespace WindowsFormsApp1
         {
             InitializeComponent();
 
-            // Увеличьте размеры формы
             this.Width = 800;
             this.Height = 600;
 
-            // Создайте SplitContainer для разделения формы на две части
             splitContainer = new SplitContainer
             {
                 Dock = DockStyle.Fill,
@@ -40,13 +37,12 @@ namespace WindowsFormsApp1
 
             Controls.Add(splitContainer);
 
-            // Создание PictureBox для отображения изображения
             pictureBox = new PictureBox
             {
                 Name = "pictureBox",
                 SizeMode = PictureBoxSizeMode.Zoom,
                 Dock = DockStyle.Fill,
-                AllowDrop = true // Разрешение перетаскивания и сброса
+                AllowDrop = true
 
             };
             splitContainer.Panel1.Controls.Add(pictureBox);
@@ -56,37 +52,34 @@ namespace WindowsFormsApp1
             pictureBox.MouseMove += PictureBox_MouseMove;
             pictureBox.MouseUp += PictureBox_MouseUp;
 
-            // Добавление обработчиков событий для перетаскивания и сброса в PictureBox
             pictureBox.DragEnter += PictureBox_DragEnter;
             pictureBox.DragDrop += PictureBox_DragDrop;
 
-            // Создание кнопки для загрузки изображения
             Button buttonLoadImage = new Button
             {
                 Name = "buttonLoadImage",
-                Text = "Load Image",
+                Text = "Загрузить картинку",
                 Dock = DockStyle.Top
             };
+
             buttonLoadImage.Click += ButtonLoadImage_Click;
             Controls.Add(buttonLoadImage);
 
-            // Кнопка для запуска камеры
             Button buttonStartCamera = new Button
             {
                 Name = "buttonStartCamera",
-                Text = "Start Camera",
+                Text = "Включить камеру",
                 Dock = DockStyle.Top
             };
             buttonStartCamera.Click += ButtonStartCamera_Click;
             Controls.Add(buttonStartCamera);
 
-            // Кнопка для остановки видео
             Button stopVideoButton = new Button
             {
                 Name = "StopVideoButton",
-                Text = "Stop Video",
+                Text = "Захватить кадр",
                 Dock = DockStyle.Top,
-                Margin = new Padding(0, 5, 0, 0) // Отступ сверху 5 пикселей
+                Margin = new Padding(0, 5, 0, 0)
             };
             stopVideoButton.Click += StopVideoButton_Click;
             Controls.Add(stopVideoButton);
@@ -95,20 +88,19 @@ namespace WindowsFormsApp1
             buttonDisplayGraph = new Button
             {
                 Name = "buttonDisplayGraph",
-                Text = "Display Brightness Graph",
+                Text = "График распределения яркости",
                 Dock = DockStyle.Top,
-                Margin = new Padding(0, 5, 0, 0) // Отступ сверху 5 пикселей
+                Margin = new Padding(0, 5, 0, 0)
             };
             buttonDisplayGraph.Click += ButtonDisplayGraph_Click;
             Controls.Add(buttonDisplayGraph);
 
-            // Создание кнопки для вычисления контраста вдоль выделенной линии
             Button buttonCalculateContrast = new Button
             {
                 Name = "buttonCalculateContrast",
-                Text = "Calculate Contrast",
+                Text = "Контраст",
                 Dock = DockStyle.Top,
-                Margin = new Padding(0, 5, 0, 0) // Отступ сверху 5 пикселей
+                Margin = new Padding(0, 5, 0, 0)
             };
             buttonCalculateContrast.Click += ButtonCalculateContrast_Click;
             Controls.Add(buttonCalculateContrast);
@@ -116,24 +108,22 @@ namespace WindowsFormsApp1
             Button buttonSaveResults = new Button
             {
                 Name = "buttonSaveResults",
-                Text = "Save Results",
+                Text = "Сохранить результат",
                 Dock = DockStyle.Top,
-                Margin = new Padding(0, 5, 0, 0) // Отступ сверху 5 пикселей
+                Margin = new Padding(0, 5, 0, 0)
             };
             buttonSaveResults.Click += ButtonSaveResults_Click;
             Controls.Add(buttonSaveResults);
 
-
-            // Создание метки для отображения результата контраста
             labelResult = new Label
             {
                 Name = "labelResult",
                 Dock = DockStyle.Bottom,
+                Font = new Font("Arial", 18, FontStyle.Regular),
                 AutoSize = true
             };
             Controls.Add(labelResult);
         }
-
 
         private void PictureBox_DragEnter(object sender, DragEventArgs e)
         {
@@ -163,16 +153,13 @@ namespace WindowsFormsApp1
 
         private void ButtonLoadImage_Click(object sender, EventArgs e)
         {
-            // Проверяем, что `cameraTimer` и `currentFrame` не равны `null`
             if (cameraTimer != null && currentFrame != null)
             {
-                // Останавливаем таймер, чтобы прекратить захват изображений с камеры
                 cameraTimer.Stop();
 
                 pictureBox.Image = null;
-
             }
-            // Очистка PictureBox перед загрузкой нового изображения
+
             pictureBox.Image = null;
 
             // Освобождение ресурсов старого изображения
@@ -182,7 +169,6 @@ namespace WindowsFormsApp1
                 bitmap = null;
             }
 
-            // Диалог выбора файла для загрузки изображения
             OpenFileDialog openFileDialog = new OpenFileDialog
             {
                 Filter = "Image Files|*.bmp;*.jpg;*.jpeg;*.png",
@@ -191,7 +177,6 @@ namespace WindowsFormsApp1
 
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
-                // Загрузка изображения
                 bitmap = new Bitmap(openFileDialog.FileName);
                 pictureBox.Image = bitmap;
             }
@@ -208,12 +193,12 @@ namespace WindowsFormsApp1
 
             if (!videoCapture.IsOpened())
             {
-                MessageBox.Show("No camera device found. Please connect a camera and try again.");
+                MessageBox.Show("Камера не найдена. Пожалуйста, подключите камеру и попробуйте еще разю");
                 return;
             }
 
-            cameraTimer = new Timer(); // Теперь инициализация переменной класса
-            cameraTimer.Interval = 30; // Интервал обновления в миллисекундах
+            cameraTimer = new Timer();
+            cameraTimer.Interval = 30;
             cameraTimer.Tick += CameraTimer_Tick;
             cameraTimer.Start();
         }
@@ -226,7 +211,6 @@ namespace WindowsFormsApp1
 
             if (!currentFrame.Empty())
             {
-                // Преобразование кадра в Bitmap
                 bitmap = BitmapConverter.ToBitmap(currentFrame);
                 pictureBox.Image = bitmap;
             }
@@ -236,52 +220,43 @@ namespace WindowsFormsApp1
         {
             if (bitmap == null)
             {
-                MessageBox.Show("Please load an image first.");
+                MessageBox.Show("Сначала требуется загрузить изображение");
                 return;
             }
 
             if (linePoints == null || linePoints.Count < 2)
             {
-                MessageBox.Show("Please draw a line on the image first.");
+                MessageBox.Show("Сначала требуется выбрать участок на изображении");
                 return;
             }
 
-            // Создание графика
             Chart chart = new Chart
             {
                 Size = new System.Drawing.Size(splitContainer.Panel2.Width, splitContainer.Panel2.Height),
                 Dock = DockStyle.Fill
             };
 
-            // Добавление области графика
             ChartArea chartArea = new ChartArea();
             chart.ChartAreas.Add(chartArea);
 
-            // Создание серии для графика
             Series series = new Series
             {
                 ChartType = SeriesChartType.Line,
                 Color = Color.Blue
             };
 
-            // Вычисление яркости вдоль линии и добавление ее в график
             foreach (System.Drawing.Point point in linePoints)
             {
-                // Получение яркости в точке линии
                 Color pixelColor = bitmap.GetPixel(point.X, point.Y);
                 double brightness = pixelColor.GetBrightness();
 
-                // Добавление данных о яркости в серию
                 series.Points.AddXY(point.X, brightness);
             }
 
-            // Добавление серии в график
             chart.Series.Add(series);
 
-            // Очистка предыдущего содержимого панели для графика
             splitContainer.Panel2.Controls.Clear();
 
-            // Добавление графика в Panel2 SplitContainer
             splitContainer.Panel2.Controls.Add(chart);
         }
 
@@ -289,13 +264,13 @@ namespace WindowsFormsApp1
         {
             if (bitmap == null)
             {
-                MessageBox.Show("Please load an image first.");
+                MessageBox.Show("Сначала требуется загрузить изображение");
                 return;
             }
 
             if (linePoints == null || linePoints.Count < 2)
             {
-                MessageBox.Show("Please draw a line on the image first.");
+                MessageBox.Show("Сначала требуется выбрать участок на изображении");
                 return;
             }
 
@@ -322,10 +297,9 @@ namespace WindowsFormsApp1
                 }
             }
 
-            // Вычисление контраста по формуле
+            // Вычисление контраста
             double contrast = (maxBrightness - minBrightness) / maxBrightness;
 
-            // Отображение контраста
             Label labelResult = Controls.Find("labelResult", true).FirstOrDefault() as Label;
             labelResult.Text = $"Контраст вдоль линии: {contrast:F10}";
         }
@@ -334,29 +308,22 @@ namespace WindowsFormsApp1
         {
             if (e.Button == MouseButtons.Left && bitmap != null)
             {
-                // Начало рисования линии
                 isDrawing = true;
 
-                // Очистить список linePoints, чтобы убрать старую линию
                 linePoints = new List<System.Drawing.Point>();
 
-                // Добавить начальную точку новой линии
                 linePoints.Add(e.Location);
 
-                // Обновить PictureBox для удаления старой линии
                 pictureBox.Refresh();
             }
         }
-
 
         private void PictureBox_MouseMove(object sender, MouseEventArgs e)
         {
             if (isDrawing)
             {
-                // Добавление текущей точки к линии
                 linePoints.Add(e.Location);
 
-                // Рисование линии (если вы хотите визуализировать текущую линию)
                 using (Graphics g = pictureBox.CreateGraphics())
                 {
                     Pen pen = new Pen(Color.Red, 2);
@@ -369,28 +336,20 @@ namespace WindowsFormsApp1
         {
             if (isDrawing)
             {
-                // Завершение рисования линии
                 isDrawing = false;
 
-                // Добавление конечной точки к линии
                 linePoints.Add(e.Location);
             }
         }
         private void StopVideoAndCaptureImage()
         {
-            // Проверяем, что `cameraTimer` и `currentFrame` не равны `null`
             if (cameraTimer != null && currentFrame != null)
             {
-                // Останавливаем таймер, чтобы прекратить захват изображений с камеры
                 cameraTimer.Stop();
 
-                // Конвертируем `currentFrame` в `Bitmap`
-                Bitmap capturedImage = OpenCvSharp.Extensions.BitmapConverter.ToBitmap(currentFrame);
+                Bitmap capturedImage = BitmapConverter.ToBitmap(currentFrame);
 
-                // Отображаем захваченное изображение в `PictureBox`
                 pictureBox.Image = capturedImage;
-
-                // Теперь `pictureBox` содержит статичное изображение, на котором можно рисовать
             }
             else
             {
@@ -400,63 +359,51 @@ namespace WindowsFormsApp1
 
         private void ButtonSaveResults_Click(object sender, EventArgs e)
         {
-            // Убедитесь, что PictureBox и Chart уже заполнены
             if (pictureBox.Image == null || splitContainer.Panel2.Controls.OfType<Chart>().FirstOrDefault() == null)
             {
-                MessageBox.Show("Please load an image and display the graph first.");
+                MessageBox.Show("Сначала необходимо загрузить изображение и отобразить график");
                 return;
             }
 
-            // Найдите график на Panel2 SplitContainer
             Chart chart = splitContainer.Panel2.Controls.OfType<Chart>().FirstOrDefault();
 
-            // Определите размеры PictureBox и Chart
             int pictureBoxWidth = pictureBox.Width;
             int pictureBoxHeight = pictureBox.Height;
 
-            // Определите размеры Chart
             int chartWidth = chart.Width;
             int chartHeight = chart.Height;
 
-            // Определите размеры текста (примерный размер)
-            int textHeight = 60; // Увеличьте высоту для текста (примерно до 60 пикселей)
+            int textHeight = 60;
 
-            // Создайте новый Bitmap для сохранения результата
             int totalHeight = pictureBoxHeight + chartHeight + textHeight + 20; // 20 пикселей для отступа между элементами
             Bitmap resultBitmap = new Bitmap(pictureBoxWidth, totalHeight);
 
-            // Создайте Graphics для нового Bitmap
             using (Graphics g = Graphics.FromImage(resultBitmap))
             {
-                // Копируем изображение из PictureBox в Bitmap
                 Bitmap pictureBoxBitmap = new Bitmap(pictureBoxWidth, pictureBoxHeight);
                 pictureBox.DrawToBitmap(pictureBoxBitmap, new Rectangle(0, 0, pictureBoxWidth, pictureBoxHeight));
                 g.DrawImage(pictureBoxBitmap, 0, 0);
 
-                // Нарисуйте линию на изображении
-                using (Pen pen = new Pen(Color.Red, 2)) // Используйте цвет и толщину линии по вашему выбору
+                using (Pen pen = new Pen(Color.Red, 2))
                 {
                     g.DrawLines(pen, linePoints.ToArray());
                 }
 
-                // Копируем график из Chart в Bitmap
                 Bitmap chartBitmap = new Bitmap(chartWidth, chartHeight);
                 chart.DrawToBitmap(chartBitmap, new Rectangle(0, 0, chartWidth, chartHeight));
-                g.DrawImage(chartBitmap, 0, pictureBoxHeight + 10); // Разместите график под изображением с отступом (10 пикселей)
+                g.DrawImage(chartBitmap, 0, pictureBoxHeight + 10);
 
-                // Создайте шрифт для текста
-                Font font = new Font("Arial", 20, FontStyle.Bold); // Увеличьте размер шрифта по необходимости
+                Font font = new Font("Arial", 20, FontStyle.Bold);
                 Brush brush = Brushes.White;
 
                 // Отображение текста с контрастом и текущей датой/временем
                 string contrastText = $"{labelResult.Text}";
-                string dateText = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                string dateText = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss");
 
-                // Расположите текст под графиком с учетом отступа
                 int textYPosition = pictureBoxHeight + chartHeight + 20;
 
                 g.DrawString(contrastText, font, brush, new PointF(10, textYPosition));
-                g.DrawString(dateText, font, brush, new PointF(10, textYPosition + 35)); // Добавьте больше пространства между строками текста
+                g.DrawString(dateText, font, brush, new PointF(10, textYPosition + 35));
             }
 
             // Сохраните результат в файл
@@ -469,10 +416,9 @@ namespace WindowsFormsApp1
             if (saveFileDialog.ShowDialog() == DialogResult.OK)
             {
                 resultBitmap.Save(saveFileDialog.FileName);
-                MessageBox.Show("Results saved successfully.");
+                MessageBox.Show("Результаты сохранены.");
             }
         }
-
 
 
         private void StopVideoButton_Click(object sender, EventArgs e)
