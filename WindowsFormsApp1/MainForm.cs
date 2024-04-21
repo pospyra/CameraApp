@@ -41,10 +41,19 @@ namespace WindowsFormsApp1
             {
                 Name = "pictureBox",
                 SizeMode = PictureBoxSizeMode.Zoom,
-                Dock = DockStyle.Fill,
-                AllowDrop = true
-
+                AllowDrop = true,
+                BackColor = Color.WhiteSmoke,
+                Anchor = AnchorStyles.None
             };
+
+            pictureBox.Width = 400; 
+            pictureBox.Height = 300;
+
+            // Центрируем PictureBox в контейнере
+            pictureBox.Location = new System.Drawing.Point(
+                (splitContainer.Panel1.Width - pictureBox.Width) / 2,
+                (splitContainer.Panel1.Height - pictureBox.Height) / 2
+            );
             splitContainer.Panel1.Controls.Add(pictureBox);
 
             // События мыши для PictureBox
@@ -156,7 +165,6 @@ namespace WindowsFormsApp1
             if (cameraTimer != null && currentFrame != null)
             {
                 cameraTimer.Stop();
-
                 pictureBox.Image = null;
             }
 
@@ -193,7 +201,7 @@ namespace WindowsFormsApp1
 
             if (!videoCapture.IsOpened())
             {
-                MessageBox.Show("Камера не найдена. Пожалуйста, подключите камеру и попробуйте еще разю");
+                MessageBox.Show("Камера не найдена. Пожалуйста, подключите камеру и попробуйте еще раз.");
                 return;
             }
 
@@ -247,7 +255,10 @@ namespace WindowsFormsApp1
 
             foreach (System.Drawing.Point point in linePoints)
             {
-                Color pixelColor = bitmap.GetPixel(point.X, point.Y);
+                // Пересчет координат точки из PictureBox в исходное изображение
+                (double transformedX, double transformedY) = TransformPointToImage(point);
+
+                Color pixelColor = bitmap.GetPixel((int)transformedX, (int)transformedY);
                 double brightness = pixelColor.GetBrightness();
 
                 series.Points.AddXY(point.X, brightness);
@@ -256,8 +267,30 @@ namespace WindowsFormsApp1
             chart.Series.Add(series);
 
             splitContainer.Panel2.Controls.Clear();
-
             splitContainer.Panel2.Controls.Add(chart);
+        }
+
+        private (double transformedX, double transformedY) TransformPointToImage(System.Drawing.Point point)
+        {
+            double pictureBoxWidth = pictureBox.Width;
+            double pictureBoxHeight = pictureBox.Height;
+
+            double imageWidth = bitmap.Width;
+            double imageHeight = bitmap.Height;
+
+            // Вычисление коэффициентов масштабирования
+            double scaleX = imageWidth / pictureBoxWidth;
+            double scaleY = imageHeight / pictureBoxHeight;
+
+            // Вычисление смещений для центрирования изображения в PictureBox
+            double offsetX = (pictureBoxWidth - imageWidth / scaleX) / 2.0;
+            double offsetY = (pictureBoxHeight - imageHeight / scaleY) / 2.0;
+
+            // Преобразование координат из PictureBox в исходное изображение
+            double transformedX = (point.X - offsetX) * scaleX;
+            double transformedY = (point.Y - offsetY) * scaleY;
+
+            return (transformedX, transformedY);
         }
 
         private void ButtonCalculateContrast_Click(object sender, EventArgs e)
@@ -274,33 +307,26 @@ namespace WindowsFormsApp1
                 return;
             }
 
-            // Вычисление максимальной и минимальной яркости вдоль линии
             double maxBrightness = double.MinValue;
             double minBrightness = double.MaxValue;
 
             foreach (System.Drawing.Point point in linePoints)
             {
-                var o = point.X;
+                // Пересчет координат точки из PictureBox в исходное изображение
+                (double transformedX, double transformedY) = TransformPointToImage(point);
+
                 // Получение яркости в точке линии
-                Color pixelColor = bitmap.GetPixel(point.X, point.Y);
+                Color pixelColor = bitmap.GetPixel((int)transformedX, (int)transformedY);
                 double brightness = pixelColor.GetBrightness();
 
                 // Обновление максимальной и минимальной яркости
-                if (brightness > maxBrightness)
-                {
-                    maxBrightness = brightness;
-                }
-
-                if (brightness < minBrightness)
-                {
-                    minBrightness = brightness;
-                }
+                maxBrightness = Math.Max(maxBrightness, brightness);
+                minBrightness = Math.Min(minBrightness, brightness);
             }
 
             // Вычисление контраста
             double contrast = (maxBrightness - minBrightness) / maxBrightness;
 
-            Label labelResult = Controls.Find("labelResult", true).FirstOrDefault() as Label;
             labelResult.Text = $"Контраст вдоль линии: {contrast:F10}";
         }
 
@@ -309,11 +335,8 @@ namespace WindowsFormsApp1
             if (e.Button == MouseButtons.Left && bitmap != null)
             {
                 isDrawing = true;
-
                 linePoints = new List<System.Drawing.Point>();
-
                 linePoints.Add(e.Location);
-
                 pictureBox.Refresh();
             }
         }
@@ -337,10 +360,10 @@ namespace WindowsFormsApp1
             if (isDrawing)
             {
                 isDrawing = false;
-
                 linePoints.Add(e.Location);
             }
         }
+
         private void StopVideoAndCaptureImage()
         {
             if (cameraTimer != null && currentFrame != null)
@@ -366,47 +389,59 @@ namespace WindowsFormsApp1
             }
 
             Chart chart = splitContainer.Panel2.Controls.OfType<Chart>().FirstOrDefault();
+            int chartWidth = chart.Width;
+            int chartHeight = chart.Height;
 
             int pictureBoxWidth = pictureBox.Width;
             int pictureBoxHeight = pictureBox.Height;
 
-            int chartWidth = chart.Width;
-            int chartHeight = chart.Height;
+            int textHeight = 30; // Высота для отображения текста
+            int spacing = 20; // Расстояние между PictureBox, графиком и текстом
 
-            int textHeight = 60;
+            int totalWidth = Math.Max(pictureBoxWidth, chartWidth);
+            // Увеличьте высоту конечного изображения для учёта текста
+            int totalHeight = pictureBoxHeight + chartHeight + textHeight * 3 + spacing * 4;
 
-            int totalHeight = pictureBoxHeight + chartHeight + textHeight + 20; // 20 пикселей для отступа между элементами
-            Bitmap resultBitmap = new Bitmap(pictureBoxWidth, totalHeight);
+            Bitmap resultBitmap = new Bitmap(totalWidth, totalHeight);
 
             using (Graphics g = Graphics.FromImage(resultBitmap))
             {
+                int offsetX = (totalWidth - pictureBoxWidth) / 2;
+                int offsetY = 0;
+
                 Bitmap pictureBoxBitmap = new Bitmap(pictureBoxWidth, pictureBoxHeight);
                 pictureBox.DrawToBitmap(pictureBoxBitmap, new Rectangle(0, 0, pictureBoxWidth, pictureBoxHeight));
-                g.DrawImage(pictureBoxBitmap, 0, 0);
+                g.DrawImage(pictureBoxBitmap, offsetX, offsetY);
 
+                // Отрисовка линии
                 using (Pen pen = new Pen(Color.Red, 2))
                 {
-                    g.DrawLines(pen, linePoints.ToArray());
+                    var translatedPoints = linePoints
+                        .Select(p => new System.Drawing.Point((int)(p.X + offsetX), (int)(p.Y + offsetY)))
+                        .ToArray();
+
+                    g.DrawLines(pen, translatedPoints);
                 }
+
+                int chartOffsetX = (totalWidth - chartWidth) / 2;
+                int chartOffsetY = pictureBoxHeight + spacing;
 
                 Bitmap chartBitmap = new Bitmap(chartWidth, chartHeight);
                 chart.DrawToBitmap(chartBitmap, new Rectangle(0, 0, chartWidth, chartHeight));
-                g.DrawImage(chartBitmap, 0, pictureBoxHeight + 10);
+                g.DrawImage(chartBitmap, chartOffsetX, chartOffsetY);
 
                 Font font = new Font("Arial", 20, FontStyle.Bold);
-                Brush brush = Brushes.White;
-
-                // Отображение текста с контрастом и текущей датой/временем
-                string contrastText = $"{labelResult.Text}";
+                Brush brush = Brushes.Black;
+                string contrastText = labelResult.Text;
                 string dateText = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss");
 
-                int textYPosition = pictureBoxHeight + chartHeight + 20;
+                int textYPosition = pictureBoxHeight + chartHeight + spacing * 3;
 
-                g.DrawString(contrastText, font, brush, new PointF(10, textYPosition));
-                g.DrawString(dateText, font, brush, new PointF(10, textYPosition + 35));
+                g.DrawString(contrastText, font, brush, 10, textYPosition);
+                g.DrawString(dateText, font, brush, 10, textYPosition + textHeight);
             }
 
-            // Сохраните результат в файл
+            // Сохранение результирующего Bitmap в файл
             SaveFileDialog saveFileDialog = new SaveFileDialog
             {
                 Filter = "Image Files|*.bmp;*.jpg;*.jpeg;*.png",
