@@ -2,6 +2,7 @@
 using OpenCvSharp.Extensions;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
@@ -20,6 +21,7 @@ namespace WindowsFormsApp1
         private OpenCvSharp.VideoCapture videoCapture;
         private Button buttonDisplayGraph;
         private SplitContainer splitContainer;
+        private Label labelResult;
 
         public MainForm()
         {
@@ -45,6 +47,7 @@ namespace WindowsFormsApp1
                 SizeMode = PictureBoxSizeMode.Zoom,
                 Dock = DockStyle.Fill,
                 AllowDrop = true // Разрешение перетаскивания и сброса
+
             };
             splitContainer.Panel1.Controls.Add(pictureBox);
 
@@ -110,8 +113,19 @@ namespace WindowsFormsApp1
             buttonCalculateContrast.Click += ButtonCalculateContrast_Click;
             Controls.Add(buttonCalculateContrast);
 
+            Button buttonSaveResults = new Button
+            {
+                Name = "buttonSaveResults",
+                Text = "Save Results",
+                Dock = DockStyle.Top,
+                Margin = new Padding(0, 5, 0, 0) // Отступ сверху 5 пикселей
+            };
+            buttonSaveResults.Click += ButtonSaveResults_Click;
+            Controls.Add(buttonSaveResults);
+
+
             // Создание метки для отображения результата контраста
-            Label labelResult = new Label
+            labelResult = new Label
             {
                 Name = "labelResult",
                 Dock = DockStyle.Bottom,
@@ -291,6 +305,7 @@ namespace WindowsFormsApp1
 
             foreach (System.Drawing.Point point in linePoints)
             {
+                var o = point.X;
                 // Получение яркости в точке линии
                 Color pixelColor = bitmap.GetPixel(point.X, point.Y);
                 double brightness = pixelColor.GetBrightness();
@@ -321,9 +336,18 @@ namespace WindowsFormsApp1
             {
                 // Начало рисования линии
                 isDrawing = true;
-                linePoints = new List<System.Drawing.Point> { e.Location };
+
+                // Очистить список linePoints, чтобы убрать старую линию
+                linePoints = new List<System.Drawing.Point>();
+
+                // Добавить начальную точку новой линии
+                linePoints.Add(e.Location);
+
+                // Обновить PictureBox для удаления старой линии
+                pictureBox.Refresh();
             }
         }
+
 
         private void PictureBox_MouseMove(object sender, MouseEventArgs e)
         {
@@ -373,6 +397,83 @@ namespace WindowsFormsApp1
                 MessageBox.Show("Не удалось захватить изображение или инициализировать таймер.");
             }
         }
+
+        private void ButtonSaveResults_Click(object sender, EventArgs e)
+        {
+            // Убедитесь, что PictureBox и Chart уже заполнены
+            if (pictureBox.Image == null || splitContainer.Panel2.Controls.OfType<Chart>().FirstOrDefault() == null)
+            {
+                MessageBox.Show("Please load an image and display the graph first.");
+                return;
+            }
+
+            // Найдите график на Panel2 SplitContainer
+            Chart chart = splitContainer.Panel2.Controls.OfType<Chart>().FirstOrDefault();
+
+            // Определите размеры PictureBox и Chart
+            int pictureBoxWidth = pictureBox.Width;
+            int pictureBoxHeight = pictureBox.Height;
+
+            // Определите размеры Chart
+            int chartWidth = chart.Width;
+            int chartHeight = chart.Height;
+
+            // Определите размеры текста (примерный размер)
+            int textHeight = 60; // Увеличьте высоту для текста (примерно до 60 пикселей)
+
+            // Создайте новый Bitmap для сохранения результата
+            int totalHeight = pictureBoxHeight + chartHeight + textHeight + 20; // 20 пикселей для отступа между элементами
+            Bitmap resultBitmap = new Bitmap(pictureBoxWidth, totalHeight);
+
+            // Создайте Graphics для нового Bitmap
+            using (Graphics g = Graphics.FromImage(resultBitmap))
+            {
+                // Копируем изображение из PictureBox в Bitmap
+                Bitmap pictureBoxBitmap = new Bitmap(pictureBoxWidth, pictureBoxHeight);
+                pictureBox.DrawToBitmap(pictureBoxBitmap, new Rectangle(0, 0, pictureBoxWidth, pictureBoxHeight));
+                g.DrawImage(pictureBoxBitmap, 0, 0);
+
+                // Нарисуйте линию на изображении
+                using (Pen pen = new Pen(Color.Red, 2)) // Используйте цвет и толщину линии по вашему выбору
+                {
+                    g.DrawLines(pen, linePoints.ToArray());
+                }
+
+                // Копируем график из Chart в Bitmap
+                Bitmap chartBitmap = new Bitmap(chartWidth, chartHeight);
+                chart.DrawToBitmap(chartBitmap, new Rectangle(0, 0, chartWidth, chartHeight));
+                g.DrawImage(chartBitmap, 0, pictureBoxHeight + 10); // Разместите график под изображением с отступом (10 пикселей)
+
+                // Создайте шрифт для текста
+                Font font = new Font("Arial", 20, FontStyle.Bold); // Увеличьте размер шрифта по необходимости
+                Brush brush = Brushes.White;
+
+                // Отображение текста с контрастом и текущей датой/временем
+                string contrastText = $"{labelResult.Text}";
+                string dateText = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+
+                // Расположите текст под графиком с учетом отступа
+                int textYPosition = pictureBoxHeight + chartHeight + 20;
+
+                g.DrawString(contrastText, font, brush, new PointF(10, textYPosition));
+                g.DrawString(dateText, font, brush, new PointF(10, textYPosition + 35)); // Добавьте больше пространства между строками текста
+            }
+
+            // Сохраните результат в файл
+            SaveFileDialog saveFileDialog = new SaveFileDialog
+            {
+                Filter = "Image Files|*.bmp;*.jpg;*.jpeg;*.png",
+                Title = "Save results"
+            };
+
+            if (saveFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                resultBitmap.Save(saveFileDialog.FileName);
+                MessageBox.Show("Results saved successfully.");
+            }
+        }
+
+
 
         private void StopVideoButton_Click(object sender, EventArgs e)
         {
