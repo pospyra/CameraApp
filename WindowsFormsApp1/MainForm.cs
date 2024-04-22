@@ -18,16 +18,24 @@ namespace WindowsFormsApp1
         private Mat currentFrame;
         private Timer cameraTimer;
         private OpenCvSharp.VideoCapture videoCapture;
+        private Button buttonLoadImage;
+        private Button buttonStartCamera;
+        private Button stopVideoButton;
         private Button buttonDisplayGraph;
+        private Button buttonCalculateContrast;
+        private Button buttonSaveResults;
         private SplitContainer splitContainer;
         private Label labelResult;
+        private Chart chart;
+        private bool isContrastCalculated;
+        private bool isGraphDisplayed;
 
         public MainForm()
         {
             InitializeComponent();
 
-            this.Width = 800;
-            this.Height = 600;
+            this.Width = 1000;
+            this.Height = 800;
 
             splitContainer = new SplitContainer
             {
@@ -46,35 +54,31 @@ namespace WindowsFormsApp1
                 Anchor = AnchorStyles.None
             };
 
-            pictureBox.Width = 400; 
-            pictureBox.Height = 300;
+            pictureBox.Width = 500;
+            pictureBox.Height = 400;
 
-            // Центрируем PictureBox в контейнере
             pictureBox.Location = new System.Drawing.Point(
                 (splitContainer.Panel1.Width - pictureBox.Width) / 2,
                 (splitContainer.Panel1.Height - pictureBox.Height) / 2
             );
             splitContainer.Panel1.Controls.Add(pictureBox);
 
-            // События мыши для PictureBox
             pictureBox.MouseDown += PictureBox_MouseDown;
             pictureBox.MouseMove += PictureBox_MouseMove;
             pictureBox.MouseUp += PictureBox_MouseUp;
-
             pictureBox.DragEnter += PictureBox_DragEnter;
             pictureBox.DragDrop += PictureBox_DragDrop;
 
-            Button buttonLoadImage = new Button
+            buttonLoadImage = new Button
             {
                 Name = "buttonLoadImage",
                 Text = "Загрузить картинку",
                 Dock = DockStyle.Top
             };
-
             buttonLoadImage.Click += ButtonLoadImage_Click;
             Controls.Add(buttonLoadImage);
 
-            Button buttonStartCamera = new Button
+            buttonStartCamera = new Button
             {
                 Name = "buttonStartCamera",
                 Text = "Включить камеру",
@@ -83,7 +87,7 @@ namespace WindowsFormsApp1
             buttonStartCamera.Click += ButtonStartCamera_Click;
             Controls.Add(buttonStartCamera);
 
-            Button stopVideoButton = new Button
+            stopVideoButton = new Button
             {
                 Name = "StopVideoButton",
                 Text = "Захватить кадр",
@@ -91,9 +95,9 @@ namespace WindowsFormsApp1
                 Margin = new Padding(0, 5, 0, 0)
             };
             stopVideoButton.Click += StopVideoButton_Click;
+            stopVideoButton.Enabled = false; // Изначально кнопка отключена
             Controls.Add(stopVideoButton);
 
-            // Кнопка для вывода графика распределения яркости
             buttonDisplayGraph = new Button
             {
                 Name = "buttonDisplayGraph",
@@ -102,9 +106,10 @@ namespace WindowsFormsApp1
                 Margin = new Padding(0, 5, 0, 0)
             };
             buttonDisplayGraph.Click += ButtonDisplayGraph_Click;
+            buttonDisplayGraph.Enabled = false; // Изначально кнопка отключена
             Controls.Add(buttonDisplayGraph);
 
-            Button buttonCalculateContrast = new Button
+            buttonCalculateContrast = new Button
             {
                 Name = "buttonCalculateContrast",
                 Text = "Контраст",
@@ -112,9 +117,10 @@ namespace WindowsFormsApp1
                 Margin = new Padding(0, 5, 0, 0)
             };
             buttonCalculateContrast.Click += ButtonCalculateContrast_Click;
+            buttonCalculateContrast.Enabled = false; // Изначально кнопка отключена
             Controls.Add(buttonCalculateContrast);
 
-            Button buttonSaveResults = new Button
+            buttonSaveResults = new Button
             {
                 Name = "buttonSaveResults",
                 Text = "Сохранить результат",
@@ -122,6 +128,7 @@ namespace WindowsFormsApp1
                 Margin = new Padding(0, 5, 0, 0)
             };
             buttonSaveResults.Click += ButtonSaveResults_Click;
+            buttonSaveResults.Enabled = false; // Изначально кнопка отключена
             Controls.Add(buttonSaveResults);
 
             labelResult = new Label
@@ -138,7 +145,7 @@ namespace WindowsFormsApp1
         {
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
-                e.Effect = DragDropEffects.Copy; // Разрешаем копирование файлов
+                e.Effect = DragDropEffects.Copy;
             }
             else
             {
@@ -156,59 +163,151 @@ namespace WindowsFormsApp1
                     string filePath = files[0];
                     bitmap = new Bitmap(filePath);
                     pictureBox.Image = bitmap;
+
+                    // Активируем кнопки для расчета контраста и отображения графика
+                    buttonCalculateContrast.Enabled = true;
+                    buttonDisplayGraph.Enabled = true;
+
+                    // Отключаем кнопку "Захватить кадр"
+                    stopVideoButton.Enabled = false;
                 }
             }
         }
-
         private void ButtonLoadImage_Click(object sender, EventArgs e)
         {
+            // Останавливаем таймер и очищаем текущий кадр, если они существуют
             if (cameraTimer != null && currentFrame != null)
             {
                 cameraTimer.Stop();
                 pictureBox.Image = null;
             }
 
+            // Очищаем изображение в pictureBox и график
             pictureBox.Image = null;
+            if (chart != null)
+            {
+                // Очистка графика
+                chart.Series.Clear();
+            }
 
-            // Освобождение ресурсов старого изображения
+            // Очищаем labelResult
+            labelResult.Text = "";
+
+            // Освобождаем bitmap, если он существует
             if (bitmap != null)
             {
                 bitmap.Dispose();
                 bitmap = null;
             }
 
+            // Диалоговое окно для выбора файла изображения
             OpenFileDialog openFileDialog = new OpenFileDialog
             {
                 Filter = "Image Files|*.bmp;*.jpg;*.jpeg;*.png",
-                Title = "Select an image file"
+                Title = "Выбрать файл изображения"
             };
 
+            // Если файл выбран, загружаем изображение и обновляем элементы управления
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
                 bitmap = new Bitmap(openFileDialog.FileName);
                 pictureBox.Image = bitmap;
+
+                // Активируем кнопки для расчета контраста и отображения графика
+                buttonCalculateContrast.Enabled = true;
+                buttonDisplayGraph.Enabled = true;
+
+                // Отключаем кнопку "Захватить кадр"
+                stopVideoButton.Enabled = false;
+                buttonSaveResults.Enabled = false;
             }
         }
 
         private void ButtonStartCamera_Click(object sender, EventArgs e)
         {
-            InitializeCamera();
+            // Очищаем изображение в pictureBox и график
+            pictureBox.Image = null;
+            if (chart != null)
+            {
+                // Очистка графика
+                chart.Series.Clear();
+            }
+
+            // Очищаем labelResult
+            labelResult.Text = "";
+
+            // Создаем форму для выбора камеры
+            using (var deviceSettingForm = new DeviceSettingForm())
+            {
+                if (deviceSettingForm.ShowDialog() == DialogResult.OK)
+                {
+                    var selectedCamera = deviceSettingForm.SelectedCamera;
+                    var selectedFormat = deviceSettingForm.SelectedFormat;
+                    var selectedFPS = deviceSettingForm.SelectedFPS;
+
+                    InitializeCamera(selectedCamera, selectedFormat, selectedFPS);
+
+                    // Активируем кнопку "Захватить кадр"
+                    stopVideoButton.Enabled = true;
+
+                    // Отключаем кнопки "Рассчитать контраст" и "Отобразить график"
+                    buttonCalculateContrast.Enabled = false;
+                    buttonDisplayGraph.Enabled = false;
+                    buttonSaveResults.Enabled = false;
+                }
+            }
         }
 
-        private void InitializeCamera()
-        {
-            videoCapture = new VideoCapture(0);
 
+        // Инициализация камеры
+        private void InitializeCamera(string cameraName, string videoFormat, int fps)
+        {
+            // Получаем индекс камеры по имени
+            int cameraIndex = GetCameraIndex(cameraName);
+
+            // Инициализация объекта VideoCapture для захвата видео
+            videoCapture = new VideoCapture(cameraIndex);
+
+            // Проверка, открыта ли камера
             if (!videoCapture.IsOpened())
             {
-                MessageBox.Show("Камера не найдена. Пожалуйста, подключите камеру и попробуйте еще раз.");
+                MessageBox.Show($"Камера '{cameraName}' не найдена. Пожалуйста, убедитесь, что камера подключена и попробуйте снова.");
                 return;
             }
 
-            cameraTimer = new Timer();
-            cameraTimer.Interval = 30;
+            // Устанавливаем частоту кадров (FPS)
+            videoCapture.Fps = fps;
+
+            // Устанавливаем формат видео с помощью FourCC
+            if (!string.IsNullOrEmpty(videoFormat) && videoFormat.Length >= 4)
+            {
+                videoCapture.Set(VideoCaptureProperties.FourCC, VideoWriter.FourCC(videoFormat[0], videoFormat[1], videoFormat[2], videoFormat[3]));
+            }
+
+            // Создаем таймер для захвата кадров
+            cameraTimer = new Timer
+            {
+                Interval = 1000 / fps // Интервал в миллисекундах для текущего FPS
+            };
             cameraTimer.Tick += CameraTimer_Tick;
             cameraTimer.Start();
+        }
+
+        // Получение индекса камеры по имени
+        private int GetCameraIndex(string cameraName)
+        {
+            var availableCameras = CameraUtility.GetAvailableCameras();
+
+            // Поиск камеры с соответствующим именем и возврат индекса
+            foreach (var camera in availableCameras)
+            {
+                if (string.Equals(camera.Value, cameraName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return camera.Key;
+                }
+            }
+
+            throw new ArgumentException($"Камера с именем '{cameraName}' не найдена.");
         }
 
         private void CameraTimer_Tick(object sender, EventArgs e)
@@ -238,7 +337,7 @@ namespace WindowsFormsApp1
                 return;
             }
 
-            Chart chart = new Chart
+            chart = new Chart
             {
                 Size = new System.Drawing.Size(splitContainer.Panel2.Width, splitContainer.Panel2.Height),
                 Dock = DockStyle.Fill
@@ -268,30 +367,45 @@ namespace WindowsFormsApp1
 
             splitContainer.Panel2.Controls.Clear();
             splitContainer.Panel2.Controls.Add(chart);
+
+            isGraphDisplayed= true;
+
+            // Если график отрисован и контраст рассчитан, активируем кнопку "Сохранить результат"
+            buttonSaveResults.Enabled = isGraphDisplayed&& isContrastCalculated;
         }
 
         private (double transformedX, double transformedY) TransformPointToImage(System.Drawing.Point point)
         {
+            // Размеры PictureBox
             double pictureBoxWidth = pictureBox.Width;
             double pictureBoxHeight = pictureBox.Height;
 
+            // Размеры изображения
             double imageWidth = bitmap.Width;
             double imageHeight = bitmap.Height;
 
             // Вычисление коэффициентов масштабирования
-            double scaleX = imageWidth / pictureBoxWidth;
-            double scaleY = imageHeight / pictureBoxHeight;
+            double scaleX = pictureBoxWidth / imageWidth;
+            double scaleY = pictureBoxHeight / imageHeight;
 
-            // Вычисление смещений для центрирования изображения в PictureBox
-            double offsetX = (pictureBoxWidth - imageWidth / scaleX) / 2.0;
-            double offsetY = (pictureBoxHeight - imageHeight / scaleY) / 2.0;
+            // Выберите минимальный масштаб, чтобы изображение пропорционально заполняло PictureBox
+            double scale = Math.Min(scaleX, scaleY);
+
+            // Фактические размеры изображения внутри PictureBox
+            double actualImageWidth = imageWidth * scale;
+            double actualImageHeight = imageHeight * scale;
+
+            // Вычислите начальные координаты (верхний левый угол) изображения внутри PictureBox
+            double startX = (pictureBoxWidth - actualImageWidth) / 2.0;
+            double startY = (pictureBoxHeight - actualImageHeight) / 2.0;
 
             // Преобразование координат из PictureBox в исходное изображение
-            double transformedX = (point.X - offsetX) * scaleX;
-            double transformedY = (point.Y - offsetY) * scaleY;
+            double transformedX = (point.X - startX) / scale;
+            double transformedY = (point.Y - startY) / scale;
 
             return (transformedX, transformedY);
         }
+
 
         private void ButtonCalculateContrast_Click(object sender, EventArgs e)
         {
@@ -328,6 +442,11 @@ namespace WindowsFormsApp1
             double contrast = (maxBrightness - minBrightness) / maxBrightness;
 
             labelResult.Text = $"Контраст вдоль линии: {contrast:F10}";
+
+            isContrastCalculated = true;
+
+            // Если график отрисован и контраст рассчитан, активируем кнопку "Сохранить результат"
+            buttonSaveResults.Enabled = isGraphDisplayed && isContrastCalculated;
         }
 
         private void PictureBox_MouseDown(object sender, MouseEventArgs e)
@@ -345,6 +464,21 @@ namespace WindowsFormsApp1
         {
             if (isDrawing)
             {
+                // Преобразуем координаты точки из `PictureBox` в координаты исходного изображения
+                (double transformedX, double transformedY) = TransformPointToImage(e.Location);
+
+                // Проверяем, находятся ли координаты точки внутри границ изображения
+                if (transformedX < 0 || transformedX >= bitmap.Width || transformedY < 0 || transformedY >= bitmap.Height)
+                {
+                    // Если координаты выходят за пределы границ изображения, прекращаем рисование и выдаем предупреждение
+                    isDrawing = false;
+                    linePoints = null;
+                    pictureBox.Refresh(); // Очищаем `pictureBox`
+                    MessageBox.Show("Вы вышли за границы изображения. Линия была обнулена.");
+                    return;
+                }
+
+                // Если координаты внутри границ изображения, продолжаем рисовать линию
                 linePoints.Add(e.Location);
 
                 using (Graphics g = pictureBox.CreateGraphics())
@@ -355,12 +489,17 @@ namespace WindowsFormsApp1
             }
         }
 
+
         private void PictureBox_MouseUp(object sender, MouseEventArgs e)
         {
             if (isDrawing)
             {
                 isDrawing = false;
                 linePoints.Add(e.Location);
+
+                ButtonDisplayGraph_Click(sender, e);
+
+                ButtonCalculateContrast_Click(sender, e);
             }
         }
 
@@ -373,6 +512,11 @@ namespace WindowsFormsApp1
                 Bitmap capturedImage = BitmapConverter.ToBitmap(currentFrame);
 
                 pictureBox.Image = capturedImage;
+
+                stopVideoButton.Enabled = false;
+
+                buttonCalculateContrast.Enabled = true;
+                buttonDisplayGraph.Enabled = true;
             }
             else
             {
