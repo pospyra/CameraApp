@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Windows.Forms;
 using DirectShowLib;
 
@@ -30,10 +29,12 @@ namespace WindowsFormsApp1
             comboBoxFPS.Items.AddRange(new[] { (object)15, (object)30, (object)60 });
         }
 
+
+
         private void FillCameraComboBox()
         {
             // Получаем список доступных камер
-            availableCameras = CameraUtility.GetAvailableCameras();
+            availableCameras = CameraUtility.Instance.GetAvailableCameras();
 
             // Заполняем ComboBox именами камер
             foreach (var camera in availableCameras)
@@ -92,5 +93,6 @@ namespace WindowsFormsApp1
             //FillSupportedFormats();
 
         }
+
     }
 }

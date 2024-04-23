@@ -56,6 +56,7 @@ namespace WindowsFormsApp1
 
             pictureBox.Width = 500;
             pictureBox.Height = 400;
+            pictureBox.BackColor = Color.Transparent;
 
             pictureBox.Location = new System.Drawing.Point(
                 (splitContainer.Panel1.Width - pictureBox.Width) / 2,
@@ -296,7 +297,7 @@ namespace WindowsFormsApp1
         // Получение индекса камеры по имени
         private int GetCameraIndex(string cameraName)
         {
-            var availableCameras = CameraUtility.GetAvailableCameras();
+            var availableCameras = CameraUtility.Instance.GetAvailableCameras();
 
             // Поиск камеры с соответствующим именем и возврат индекса
             foreach (var camera in availableCameras)
