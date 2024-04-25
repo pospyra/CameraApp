@@ -3,6 +3,7 @@ using OpenCvSharp.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Linq;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
@@ -69,6 +70,16 @@ namespace WindowsFormsApp1
             pictureBox.MouseUp += PictureBox_MouseUp;
             pictureBox.DragEnter += PictureBox_DragEnter;
             pictureBox.DragDrop += PictureBox_DragDrop;
+
+            Button buttonOpenDeviceProcessing = new Button
+            {
+                Text = "Настройки",
+                Dock = DockStyle.Top
+            };
+            buttonOpenDeviceProcessing.Click += ButtonOpenDeviceProcessing_Click;
+
+            // Добавляем кнопку на форму
+            Controls.Add(buttonOpenDeviceProcessing);
 
             buttonLoadImage = new Button
             {
@@ -141,6 +152,175 @@ namespace WindowsFormsApp1
             };
             Controls.Add(labelResult);
         }
+
+        public void ApplySettings(double hue, double saturation, bool whiteBalance, double brightness, double contrast, double exposure, double sharpness, double gamma, double backlightCompensation)
+        {
+
+            // Применяем настройки цвета
+            ApplyColorSettings(hue, saturation, whiteBalance);
+
+            // Применяем настройки экспозиции
+           // ApplyExposureSettings(brightness, contrast, exposure);
+
+            // Применяем настройки изображения
+           // ApplyImageSettings(sharpness, gamma, backlightCompensation);
+        }
+
+        private void ApplyColorSettings(double hue, double saturation, bool whiteBalance)
+        {
+            // Убедитесь, что изображение загружено в PictureBox
+            if (pictureBox.Image == null)
+            {
+                return; // Нет изображения для применения изменений
+            }
+
+            // Преобразуем Image из PictureBox в Bitmap
+            Bitmap bitmap = new Bitmap(pictureBox.Image);
+
+            // Преобразуем hue в радианы для использования в расчетах
+            double hueRadian = hue * Math.PI / 180; // Преобразуем угол в радианы
+            double cosHue = Math.Cos(hueRadian);
+            double sinHue = Math.Sin(hueRadian);
+
+            // Создаем ColorMatrix для изменения оттенка
+            ColorMatrix hueMatrix = new ColorMatrix(new float[][]
+            {
+                new float[] { (float)(cosHue + (1 - cosHue) * 0.299), (float)((1 - cosHue) * 0.587 - sinHue * 0.299), (float)((1 - cosHue) * 0.114 + sinHue * 0.886), 0, 0 },
+                new float[] { (float)((1 - cosHue) * 0.299 + sinHue * 0.299), (float)(cosHue + (1 - cosHue) * 0.587), (float)((1 - cosHue) * 0.114 - sinHue * 0.299), 0, 0 },
+                new float[] { (float)((1 - cosHue) * 0.299 - sinHue * 0.886), (float)((1 - cosHue) * 0.587 + sinHue * 0.299), (float)(cosHue + (1 - cosHue) * 0.114), 0, 0 },
+                new float[] { 0, 0, 0, 1, 0 },
+                new float[] { 0, 0, 0, 0, 1 }
+            });
+
+
+            // Создаем экземпляр ImageAttributes для управления атрибутами изображения
+            ImageAttributes imageAttributes = new ImageAttributes();
+            imageAttributes.SetColorMatrix(hueMatrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
+
+            // Создаем новый Bitmap для результата
+            Bitmap updatedBitmap = new Bitmap(bitmap.Width, bitmap.Height);
+
+            // Используем Graphics для применения ColorMatrix
+            using (Graphics graphics = Graphics.FromImage(updatedBitmap))
+            {
+                graphics.DrawImage(bitmap, new Rectangle(0, 0, bitmap.Width, bitmap.Height), 0, 0, bitmap.Width, bitmap.Height, GraphicsUnit.Pixel, imageAttributes);
+            }
+
+            // Освобождаем исходное изображение
+            bitmap.Dispose();
+
+            // Обновляем PictureBox новым изображением
+            pictureBox.Image = updatedBitmap;
+        }
+
+
+
+        private void ApplyExposureSettings(double brightness, double contrast, double exposure)
+        {
+            // Убедитесь, что картинка загружена
+            if (bitmap == null)
+            {
+                return; // Нечего применять, если изображения нет
+            }
+
+            // Создаем экземпляр ImageAttributes для управления атрибутами изображения
+            ImageAttributes imageAttributes = new ImageAttributes();
+
+            // Создаем ColorMatrix для изменения яркости, контраста и экспозиции
+            // Массив для цветовой матрицы
+            float[][] colorMatrixElements = new float[5][];
+
+            // Настройка яркости
+            // Создаем матрицу для изменения яркости
+            float brightnessFactor = (float)brightness; // Преобразуем яркость из double в float
+
+            colorMatrixElements[0] = new float[] { brightnessFactor, 0, 0, 0, 0 };
+            colorMatrixElements[1] = new float[] { 0, brightnessFactor, 0, 0, 0 };
+            colorMatrixElements[2] = new float[] { 0, 0, brightnessFactor, 0, 0 };
+            colorMatrixElements[3] = new float[] { 0, 0, 0, 1, 0 };
+            colorMatrixElements[4] = new float[] { 0, 0, 0, 0, 1 };
+
+            // Создаем ColorMatrix с учетом матрицы яркости
+            ColorMatrix brightnessMatrix = new ColorMatrix(colorMatrixElements);
+            imageAttributes.SetColorMatrix(brightnessMatrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
+
+            // Настройка контраста
+            float contrastFactor = (float)contrast;
+
+            colorMatrixElements[0] = new float[] { contrastFactor, 0, 0, 0, 0 };
+            colorMatrixElements[1] = new float[] { 0, contrastFactor, 0, 0, 0 };
+            colorMatrixElements[2] = new float[] { 0, 0, contrastFactor, 0, 0 };
+            colorMatrixElements[3] = new float[] { 0, 0, 0, 1, 0 };
+            colorMatrixElements[4] = new float[] { 0, 0, 0, 0, 1 };
+
+            // Создаем ColorMatrix с учетом матрицы контраста
+            ColorMatrix contrastMatrix = new ColorMatrix(colorMatrixElements);
+            imageAttributes.SetColorMatrix(contrastMatrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
+
+            // Настройка экспозиции
+            float exposureFactor = (float)exposure;
+
+            // Для управления экспозицией, как правило, потребуется комбинация яркости и контраста, чтобы достичь желаемого эффекта экспозиции. 
+            // Экспозиция = яркость * контраст
+
+            float[][] exposureMatrix = new float[5][];
+            exposureMatrix[0] = new float[] { exposureFactor, 0, 0, 0, 0 };
+            exposureMatrix[1] = new float[] { 0, exposureFactor, 0, 0, 0 };
+            exposureMatrix[2] = new float[] { 0, 0, exposureFactor, 0, 0 };
+            exposureMatrix[3] = new float[] { 0, 0, 0, 1, 0 };
+            exposureMatrix[4] = new float[] { 0, 0, 0, 0, 1 };
+
+            // Создаем ColorMatrix с учетом матрицы экспозиции
+            ColorMatrix exposureColorMatrix = new ColorMatrix(exposureMatrix);
+            imageAttributes.SetColorMatrix(exposureColorMatrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
+
+            // Создаем новое изображение для изменения
+            Bitmap adjustedBitmap = new Bitmap(bitmap.Width, bitmap.Height);
+            using (Graphics graphics = Graphics.FromImage(adjustedBitmap))
+            {
+                graphics.DrawImage(bitmap, new Rectangle(0, 0, adjustedBitmap.Width, adjustedBitmap.Height), 0, 0, bitmap.Width, bitmap.Height, GraphicsUnit.Pixel, imageAttributes);
+            }
+
+            // Устанавливаем отредактированное изображение в PictureBox
+            pictureBox.Image = adjustedBitmap;
+        }
+
+
+        private void ButtonOpenDeviceProcessing_Click(object sender, EventArgs e)
+        {
+            // Создаем экземпляр Device_Processing
+            DeviceProcessing deviceProcessing = new DeviceProcessing(this);
+
+            // Открываем окно в модальном режиме
+            deviceProcessing.ShowDialog();
+        }
+
+
+        private void ApplyImageSettings(double sharpness, double gamma, double backlightCompensation)
+        {
+            if (currentFrame != null)
+            {
+                // Настройка остроты (реализация зависит от вашей камеры и используемой библиотеки)
+                // Примерно так: currentFrame.ConvertTo(currentFrame, -1, sharpness / 100.0);
+
+                // Применение коррекции гаммы
+                // Пример для коррекции гаммы (измените на вашу реализацию)
+                Mat lut = new Mat(1, 256, MatType.CV_8UC1);
+                for (int i = 0; i < 256; i++)
+                {
+                    lut.At<byte>(0, i) = (byte)(Math.Pow(i / 255.0, 1.0 / gamma) * 255.0);
+                }
+                Cv2.LUT(currentFrame, lut, currentFrame);
+
+                // Настройка компенсации подсветки (примените к изображению или камере)
+                // Реализация зависит от вашей камеры и используемой библиотеки.
+
+                // Обновляем PictureBox текущим кадром
+                bitmap = BitmapConverter.ToBitmap(currentFrame);
+                pictureBox.Image = bitmap;
+            }
+        }
+
 
         private void PictureBox_DragEnter(object sender, DragEventArgs e)
         {
@@ -259,8 +439,6 @@ namespace WindowsFormsApp1
             }
         }
 
-
-        // Инициализация камеры
         private void InitializeCamera(string cameraName, string videoFormat, int fps)
         {
             // Получаем индекс камеры по имени
@@ -369,10 +547,10 @@ namespace WindowsFormsApp1
             splitContainer.Panel2.Controls.Clear();
             splitContainer.Panel2.Controls.Add(chart);
 
-            isGraphDisplayed= true;
+            isGraphDisplayed = true;
 
             // Если график отрисован и контраст рассчитан, активируем кнопку "Сохранить результат"
-            buttonSaveResults.Enabled = isGraphDisplayed&& isContrastCalculated;
+            buttonSaveResults.Enabled = isGraphDisplayed && isContrastCalculated;
         }
 
         private (double transformedX, double transformedY) TransformPointToImage(System.Drawing.Point point)
@@ -489,7 +667,6 @@ namespace WindowsFormsApp1
                 }
             }
         }
-
 
         private void PictureBox_MouseUp(object sender, MouseEventArgs e)
         {

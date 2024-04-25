@@ -114,6 +114,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CameraUtility.cs" />
+    <Compile Include="DeviceProcessing.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DeviceProcessing.Designer.cs">
+      <DependentUpon>DeviceProcessing.cs</DependentUpon>
+    </Compile>
     <Compile Include="DeviceSettingForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -128,6 +134,9 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="DeviceProcessing.resx">
+      <DependentUpon>DeviceProcessing.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="DeviceSettingForm.resx">
       <DependentUpon>DeviceSettingForm.cs</DependentUpon>
     </EmbeddedResource>

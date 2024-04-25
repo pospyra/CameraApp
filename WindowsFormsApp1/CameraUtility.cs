@@ -5,20 +5,16 @@ using DirectShowLib;
 
 public class CameraUtility
 {
-    // Синглтон-инстанс для хранения списка доступных камер
     private static CameraUtility _instance;
 
-    // Словарь для хранения индексов камер и их имен
     private Dictionary<int, string> cameraDict;
 
-    // Приватный конструктор для синглтона
     private CameraUtility()
     {
         cameraDict = new Dictionary<int, string>();
         InitializeCameras();
     }
 
-    // Метод для получения синглтон-инстанса
     public static CameraUtility Instance
     {
         get
@@ -31,19 +27,15 @@ public class CameraUtility
         }
     }
 
-    // Инициализация списка камер
     private void InitializeCameras()
     {
-        // Получаем список доступных камер
         DsDevice[] videoDevices = DsDevice.GetDevicesOfCat(FilterCategory.VideoInputDevice);
 
-        // Перебор всех доступных устройств и добавление их в словарь
         for (int i = 0; i < videoDevices.Length; i++)
         {
             cameraDict.Add(i, videoDevices[i].Name);
         }
 
-        // Освобождение ресурсов
         foreach (var device in videoDevices)
         {
             device.Dispose();
