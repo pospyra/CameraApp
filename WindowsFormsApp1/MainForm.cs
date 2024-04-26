@@ -110,7 +110,7 @@ namespace WindowsFormsApp1
                 Margin = new Padding(0, 5, 0, 0)
             };
             stopVideoButton.Click += StopVideoButton_Click;
-            stopVideoButton.Enabled = false; 
+            stopVideoButton.Enabled = false;
             Controls.Add(stopVideoButton);
 
             buttonDisplayGraph = new Button
@@ -121,7 +121,7 @@ namespace WindowsFormsApp1
                 Margin = new Padding(0, 5, 0, 0)
             };
             buttonDisplayGraph.Click += ButtonDisplayGraph_Click;
-            buttonDisplayGraph.Enabled = false; 
+            buttonDisplayGraph.Enabled = false;
             Controls.Add(buttonDisplayGraph);
 
             buttonCalculateContrast = new Button
@@ -132,7 +132,7 @@ namespace WindowsFormsApp1
                 Margin = new Padding(0, 5, 0, 0)
             };
             buttonCalculateContrast.Click += ButtonCalculateContrast_Click;
-            buttonCalculateContrast.Enabled = false; 
+            buttonCalculateContrast.Enabled = false;
             Controls.Add(buttonCalculateContrast);
 
             buttonSaveResults = new Button
@@ -143,7 +143,7 @@ namespace WindowsFormsApp1
                 Margin = new Padding(0, 5, 0, 0)
             };
             buttonSaveResults.Click += ButtonSaveResults_Click;
-            buttonSaveResults.Enabled = false; 
+            buttonSaveResults.Enabled = false;
             Controls.Add(buttonSaveResults);
 
             labelResult = new Label
@@ -166,11 +166,11 @@ namespace WindowsFormsApp1
             Mat img = BitmapConverter.ToMat(bitmap);
             Mat modifiedImg = img.Clone();
 
-            ApplyColorSettings(ref modifiedImg, hue, saturation);
+            ImageEditor editor = new ImageEditor();
 
-           ApplyExposureSettings(ref modifiedImg, (int)(brightness), contrast, exposure);
-
-            ApplyImageSettings(ref modifiedImg, sharpness, gamma, backlightCompensation);
+            editor.ApplyColorSettings(ref modifiedImg, hue, saturation);
+            editor.ApplyExposureSettings(ref modifiedImg, (int)(brightness), contrast, exposure);
+            editor.ApplyImageSettings(ref modifiedImg, sharpness, gamma, backlightCompensation);
 
             Bitmap modifiedBitmap = BitmapConverter.ToBitmap(modifiedImg);
 
@@ -179,6 +179,7 @@ namespace WindowsFormsApp1
 
             pictureBox.Image = modifiedBitmap;
         }
+
 
         private void ApplyColorSettings(ref Mat img, double hue, double saturation)
         {
@@ -437,7 +438,7 @@ namespace WindowsFormsApp1
 
             cameraTimer = new Timer
             {
-                Interval = 1000 / fps 
+                Interval = 1000 / fps
             };
             cameraTimer.Tick += CameraTimer_Tick;
             cameraTimer.Start();
@@ -607,7 +608,7 @@ namespace WindowsFormsApp1
                 {
                     isDrawing = false;
                     linePoints = null;
-                    pictureBox.Refresh(); 
+                    pictureBox.Refresh();
                     MessageBox.Show("Вы вышли за границы изображения. Линия была обнулена.");
                     return;
                 }
@@ -691,8 +692,8 @@ namespace WindowsFormsApp1
             int pictureBoxWidth = pictureBox.Width;
             int pictureBoxHeight = pictureBox.Height;
 
-            int textHeight = 30; 
-            int spacing = 20; 
+            int textHeight = 30;
+            int spacing = 20;
 
             int totalWidth = Math.Max(pictureBoxWidth, chartWidth);
 

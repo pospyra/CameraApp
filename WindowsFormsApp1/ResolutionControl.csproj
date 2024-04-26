@@ -126,6 +126,7 @@
     <Compile Include="DeviceSettingForm.Designer.cs">
       <DependentUpon>DeviceSettingForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="ImageEditor.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
