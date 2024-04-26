@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Windows.Forms;
 using DirectShowLib;
+using OpenCvSharp;
 
 public class CameraUtility
 {
@@ -47,6 +49,22 @@ public class CameraUtility
         return cameraDict;
     }
 
+    public void ReleaseCameraAndTimer(Timer cameraTimer, VideoCapture videoCapture)
+    {
+        if (cameraTimer != null)
+        {
+            cameraTimer.Stop();
+            cameraTimer.Dispose();
+            cameraTimer = null;
+        }
+
+        if (videoCapture != null)
+        {
+            videoCapture.Release();
+            videoCapture.Dispose();
+            videoCapture = null;
+        }
+    }
 
 
     // Метод для получения доступных форматов видео из выбранной камеры
