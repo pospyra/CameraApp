@@ -20,26 +20,30 @@ namespace WindowsFormsApp1
         {
             InitializeComponent();
 
-            // Заполняем ComboBox камер и поддерживаемые форматы
             FillCameraComboBox();
 
             FillSupportedFormats();
 
-            // Заполняем ComboBox FPS
             comboBoxFPS.Items.AddRange(new[] { (object)15, (object)30, (object)60 });
+
+            if (comboBoxFPS.Items.Count > 0)
+            {
+                comboBoxFPS.SelectedIndex = 0;
+            }
         }
-
-
 
         private void FillCameraComboBox()
         {
-            // Получаем список доступных камер
             availableCameras = CameraUtility.Instance.GetAvailableCameras();
 
-            // Заполняем ComboBox именами камер
             foreach (var camera in availableCameras)
             {
                 comboBoxCamera.Items.Add(camera.Value);
+
+                if (comboBoxCamera.Items.Count > 0)
+                {
+                    comboBoxCamera.SelectedIndex = 0;
+                }
             }
         }
 
@@ -52,25 +56,23 @@ namespace WindowsFormsApp1
             comboBoxFormat.Items.Add("MXF (Material Exchange Format)");
             comboBoxFormat.Items.Add("AVI (Audio Video Interleave)");
             comboBoxFormat.Items.Add("AVCHD (Advanced Video Coding High Definition)");
+
+            if (comboBoxFormat.Items.Count > 0)
+            {
+                comboBoxFormat.SelectedIndex = 0;
+            }
         }
 
-
-        // Обработчик события изменения выбора камеры
         private void ComboBoxCamera_SelectedIndexChanged(object sender, EventArgs e)
         {
-            // Получаем выбранный индекс камеры
             int selectedCameraIndex = comboBoxCamera.SelectedIndex;
 
-            // Получаем поддерживаемые форматы для выбранной камеры
             var formats = cameraFormats[selectedCameraIndex];
 
-            // Очищаем ComboBox форматов
             comboBoxFormat.Items.Clear();
 
-            // Заполняем ComboBox поддерживаемыми форматами
             foreach (var format in formats)
             {
-                // Строка для отображения формата (ширина, высота, FPS, формат)
                 string formatString = $"{format.width}x{format.height} @ {format.fps}fps ({format.format})";
                 comboBoxFormat.Items.Add(formatString);
             }
@@ -78,20 +80,16 @@ namespace WindowsFormsApp1
 
         private void btnOK_Click(object sender, EventArgs e)
         {
-            // Получаем выбранные настройки камеры
             SelectedCamera = comboBoxCamera.SelectedItem.ToString();
             SelectedFormat = comboBoxFormat.SelectedItem.ToString();
             SelectedFPS = int.Parse(comboBoxFPS.SelectedItem.ToString());
 
-            // Устанавливаем результат диалога и закрываем форму
             DialogResult = DialogResult.OK;
             Close();
         }
 
         private void comboBoxCamera_SelectedIndexChanged_1(object sender, EventArgs e)
         {
-            //FillSupportedFormats();
-
         }
 
     }
