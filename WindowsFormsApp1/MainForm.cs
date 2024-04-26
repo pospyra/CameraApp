@@ -34,7 +34,11 @@ namespace WindowsFormsApp1
         public MainForm()
         {
             InitializeComponent();
+            InitializeForm();
+        }
 
+        private void InitializeForm()
+        {
             this.Width = 1000;
             this.Height = 800;
 
@@ -78,7 +82,6 @@ namespace WindowsFormsApp1
             };
             buttonOpenDeviceProcessing.Click += ButtonOpenDeviceProcessing_Click;
 
-            // Добавляем кнопку на форму
             Controls.Add(buttonOpenDeviceProcessing);
 
             buttonLoadImage = new Button
@@ -107,7 +110,7 @@ namespace WindowsFormsApp1
                 Margin = new Padding(0, 5, 0, 0)
             };
             stopVideoButton.Click += StopVideoButton_Click;
-            stopVideoButton.Enabled = false; // Изначально кнопка отключена
+            stopVideoButton.Enabled = false; 
             Controls.Add(stopVideoButton);
 
             buttonDisplayGraph = new Button
@@ -118,7 +121,7 @@ namespace WindowsFormsApp1
                 Margin = new Padding(0, 5, 0, 0)
             };
             buttonDisplayGraph.Click += ButtonDisplayGraph_Click;
-            buttonDisplayGraph.Enabled = false; // Изначально кнопка отключена
+            buttonDisplayGraph.Enabled = false; 
             Controls.Add(buttonDisplayGraph);
 
             buttonCalculateContrast = new Button
@@ -129,7 +132,7 @@ namespace WindowsFormsApp1
                 Margin = new Padding(0, 5, 0, 0)
             };
             buttonCalculateContrast.Click += ButtonCalculateContrast_Click;
-            buttonCalculateContrast.Enabled = false; // Изначально кнопка отключена
+            buttonCalculateContrast.Enabled = false; 
             Controls.Add(buttonCalculateContrast);
 
             buttonSaveResults = new Button
@@ -140,7 +143,7 @@ namespace WindowsFormsApp1
                 Margin = new Padding(0, 5, 0, 0)
             };
             buttonSaveResults.Click += ButtonSaveResults_Click;
-            buttonSaveResults.Enabled = false; // Изначально кнопка отключена
+            buttonSaveResults.Enabled = false; 
             Controls.Add(buttonSaveResults);
 
             labelResult = new Label
@@ -160,27 +163,20 @@ namespace WindowsFormsApp1
                 return;
             }
 
-            // Клонируем исходное изображение для модификации
             Mat img = BitmapConverter.ToMat(bitmap);
             Mat modifiedImg = img.Clone();
 
-            // Применяем настройки цвета
             ApplyColorSettings(ref modifiedImg, hue, saturation);
 
-            // Применяем настройки экспозиции
            ApplyExposureSettings(ref modifiedImg, (int)(brightness), contrast, exposure);
 
-            // Применяем настройки изображения
             ApplyImageSettings(ref modifiedImg, sharpness, gamma, backlightCompensation);
 
-            // Преобразуем измененное изображение в `Bitmap` перед отображением
             Bitmap modifiedBitmap = BitmapConverter.ToBitmap(modifiedImg);
 
-            // Освобождаем ресурсы для `Mat`
             img.Dispose();
             modifiedImg.Dispose();
 
-            // Отображаем измененное изображение в `PictureBox`
             pictureBox.Image = modifiedBitmap;
         }
 
@@ -188,12 +184,9 @@ namespace WindowsFormsApp1
         {
             if (img.Channels() == 1)
             {
-                // Обработка черно-белого изображения
-                // Не применяем настройки hue и saturation, так как они применимы только к цветным изображениям
                 return;
             }
 
-            // Продолжайте текущую обработку цветных изображений, как в коде ниже
             Cv2.CvtColor(img, img, ColorConversionCodes.BGR2HSV);
 
             for (int i = 0; i < img.Rows; i++)
@@ -211,20 +204,16 @@ namespace WindowsFormsApp1
             ApplyWhiteBalance(ref img);
         }
 
-
         private void ApplyExposureSettings(ref Mat img, int brightness, double contrast, double exposure)
         {
             if (img.Channels() == 1)
             {
-                // If the image is grayscale, apply brightness and contrast directly
                 img.ConvertTo(img, -1, contrast, brightness);
 
-                // Adjust exposure by modifying the pixel values
                 for (int i = 0; i < img.Rows; i++)
                 {
                     for (int j = 0; j < img.Cols; j++)
                     {
-                        // Adjust the pixel value
                         byte pixel = img.At<byte>(i, j);
                         pixel = (byte)(pixel + (exposure * 128));
                         img.Set(i, j, pixel);
@@ -233,10 +222,8 @@ namespace WindowsFormsApp1
             }
             else if (img.Channels() == 3)
             {
-                // Apply brightness and contrast for 3-channel image (BGR)
                 img.ConvertTo(img, -1, contrast, brightness);
 
-                // Convert to YUV color space
                 Mat yuvImg = new Mat();
                 Cv2.CvtColor(img, yuvImg, ColorConversionCodes.BGR2YUV);
 
@@ -245,39 +232,27 @@ namespace WindowsFormsApp1
                     for (int j = 0; j < yuvImg.Cols; j++)
                     {
                         Vec3b pixel = yuvImg.At<Vec3b>(i, j);
-                        // Adjust brightness channel
                         pixel.Item0 = (byte)(pixel.Item0 + (exposure * 128));
                         yuvImg.Set(i, j, pixel);
                     }
                 }
 
-                // Convert back to BGR color space
                 Cv2.CvtColor(yuvImg, img, ColorConversionCodes.YUV2BGR);
             }
         }
 
-
-
         private void ApplyWhiteBalance(ref Mat img)
         {
-            // Example of applying white balance
-            // You can customize this function based on your white balance requirements
             Mat wbImg = img.Clone();
-            // You can apply any white balance algorithm here
-            // For simplicity, we are not modifying the image
             img = wbImg;
         }
 
         private void ApplyImageSettings(ref Mat img, double sharpness, double gamma, double backlightCompensation)
         {
-            // Получаем количество каналов изображения
             int channels = img.Channels();
 
-            // Apply sharpness (сглаживание или резкость)
             if (channels == 1)
             {
-                // Обработка черно-белых изображений
-                // Усиление резкости черно-белого изображения с использованием Laplacian фильтра
                 if (sharpness < 1.0)
                 {
                     Mat laplacianImg = new Mat();
@@ -288,10 +263,8 @@ namespace WindowsFormsApp1
             }
             else if (channels == 3)
             {
-                // Обработка цветных изображений
                 if (sharpness > 1.0)
                 {
-                    // Применение гауссова размытия для сглаживания изображения
                     int kernelSize = (int)(sharpness * 5);
                     if (kernelSize % 2 == 0)
                     {
@@ -301,7 +274,6 @@ namespace WindowsFormsApp1
                 }
                 else if (sharpness < 1.0)
                 {
-                    // Применение фильтра повышения резкости
                     Mat laplacianImg = new Mat();
                     Cv2.Laplacian(img, laplacianImg, img.Depth());
                     img += (1.0 - sharpness) * laplacianImg;
@@ -309,7 +281,6 @@ namespace WindowsFormsApp1
                 }
             }
 
-            // Apply gamma correction (гамма-коррекция)
             if (gamma != 1.0)
             {
                 Mat gammaImg = new Mat();
@@ -331,7 +302,6 @@ namespace WindowsFormsApp1
                 img = gammaImg;
             }
 
-            // Apply backlight compensation (компенсация подсветки)
             double backlightCompensationFactor = backlightCompensation - 0.5;
 
             if (backlightCompensationFactor != 0.0)
@@ -346,10 +316,7 @@ namespace WindowsFormsApp1
             linePoints = null;
             pictureBox.Refresh();
 
-            // Создаем экземпляр Device_Processing
             DeviceProcessing deviceProcessing = new DeviceProcessing(this);
-
-            // Открываем окно в модальном режиме
             deviceProcessing.ShowDialog();
         }
 
@@ -376,60 +343,45 @@ namespace WindowsFormsApp1
                     bitmap = new Bitmap(filePath);
                     pictureBox.Image = bitmap;
 
-                    // Активируем кнопки для расчета контраста и отображения графика
                     buttonCalculateContrast.Enabled = true;
                     buttonDisplayGraph.Enabled = true;
 
-                    // Отключаем кнопку "Захватить кадр"
                     stopVideoButton.Enabled = false;
                 }
             }
         }
         private void ButtonLoadImage_Click(object sender, EventArgs e)
         {
-            // Останавливаем таймер и очищаем текущий кадр, если они существуют
-            if (cameraTimer != null && currentFrame != null)
-            {
-                cameraTimer.Stop();
-                pictureBox.Image = null;
-            }
+            ReleaseCameraAndTimer();
 
-            // Очищаем изображение в pictureBox и график
             pictureBox.Image = null;
             if (chart != null)
             {
-                // Очистка графика
                 chart.Series.Clear();
             }
 
-            // Очищаем labelResult
-            labelResult.Text = "";
+            labelResult.Text = string.Empty;
 
-            // Освобождаем bitmap, если он существует
             if (bitmap != null)
             {
                 bitmap.Dispose();
                 bitmap = null;
             }
 
-            // Диалоговое окно для выбора файла изображения
             OpenFileDialog openFileDialog = new OpenFileDialog
             {
                 Filter = "Image Files|*.bmp;*.jpg;*.jpeg;*.png",
                 Title = "Выбрать файл изображения"
             };
 
-            // Если файл выбран, загружаем изображение и обновляем элементы управления
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
                 bitmap = new Bitmap(openFileDialog.FileName);
                 pictureBox.Image = bitmap;
 
-                // Активируем кнопки для расчета контраста и отображения графика
                 buttonCalculateContrast.Enabled = true;
                 buttonDisplayGraph.Enabled = true;
 
-                // Отключаем кнопку "Захватить кадр"
                 stopVideoButton.Enabled = false;
                 buttonSaveResults.Enabled = false;
             }
@@ -437,18 +389,14 @@ namespace WindowsFormsApp1
 
         private void ButtonStartCamera_Click(object sender, EventArgs e)
         {
-            // Очищаем изображение в pictureBox и график
             pictureBox.Image = null;
             if (chart != null)
             {
-                // Очистка графика
                 chart.Series.Clear();
             }
 
-            // Очищаем labelResult
             labelResult.Text = "";
 
-            // Создаем форму для выбора камеры
             using (var deviceSettingForm = new DeviceSettingForm())
             {
                 if (deviceSettingForm.ShowDialog() == DialogResult.OK)
@@ -459,10 +407,8 @@ namespace WindowsFormsApp1
 
                     InitializeCamera(selectedCamera, selectedFormat, selectedFPS);
 
-                    // Активируем кнопку "Захватить кадр"
                     stopVideoButton.Enabled = true;
 
-                    // Отключаем кнопки "Рассчитать контраст" и "Отобразить график"
                     buttonCalculateContrast.Enabled = false;
                     buttonDisplayGraph.Enabled = false;
                     buttonSaveResults.Enabled = false;
@@ -472,43 +418,35 @@ namespace WindowsFormsApp1
 
         private void InitializeCamera(string cameraName, string videoFormat, int fps)
         {
-            // Получаем индекс камеры по имени
             int cameraIndex = GetCameraIndex(cameraName);
 
-            // Инициализация объекта VideoCapture для захвата видео
             videoCapture = new VideoCapture(cameraIndex);
 
-            // Проверка, открыта ли камера
             if (!videoCapture.IsOpened())
             {
                 MessageBox.Show($"Камера '{cameraName}' не найдена. Пожалуйста, убедитесь, что камера подключена и попробуйте снова.");
                 return;
             }
 
-            // Устанавливаем частоту кадров (FPS)
             videoCapture.Fps = fps;
 
-            // Устанавливаем формат видео с помощью FourCC
             if (!string.IsNullOrEmpty(videoFormat) && videoFormat.Length >= 4)
             {
                 videoCapture.Set(VideoCaptureProperties.FourCC, VideoWriter.FourCC(videoFormat[0], videoFormat[1], videoFormat[2], videoFormat[3]));
             }
 
-            // Создаем таймер для захвата кадров
             cameraTimer = new Timer
             {
-                Interval = 1000 / fps // Интервал в миллисекундах для текущего FPS
+                Interval = 1000 / fps 
             };
             cameraTimer.Tick += CameraTimer_Tick;
             cameraTimer.Start();
         }
 
-        // Получение индекса камеры по имени
         private int GetCameraIndex(string cameraName)
         {
             var availableCameras = CameraUtility.Instance.GetAvailableCameras();
 
-            // Поиск камеры с соответствующим именем и возврат индекса
             foreach (var camera in availableCameras)
             {
                 if (string.Equals(camera.Value, cameraName, StringComparison.OrdinalIgnoreCase))
@@ -522,7 +460,6 @@ namespace WindowsFormsApp1
 
         private void CameraTimer_Tick(object sender, EventArgs e)
         {
-            // Захват кадра из камеры
             currentFrame = new Mat();
             videoCapture.Read(currentFrame);
 
@@ -564,7 +501,6 @@ namespace WindowsFormsApp1
 
             foreach (System.Drawing.Point point in linePoints)
             {
-                // Пересчет координат точки из PictureBox в исходное изображение
                 (double transformedX, double transformedY) = TransformPointToImage(point);
 
                 Color pixelColor = bitmap.GetPixel((int)transformedX, (int)transformedY);
@@ -580,17 +516,14 @@ namespace WindowsFormsApp1
 
             isGraphDisplayed = true;
 
-            // Если график отрисован и контраст рассчитан, активируем кнопку "Сохранить результат"
             buttonSaveResults.Enabled = isGraphDisplayed && isContrastCalculated;
         }
 
         private (double transformedX, double transformedY) TransformPointToImage(System.Drawing.Point point)
         {
-            // Размеры PictureBox
             double pictureBoxWidth = pictureBox.Width;
             double pictureBoxHeight = pictureBox.Height;
 
-            // Размеры изображения
             double imageWidth = bitmap.Width;
             double imageHeight = bitmap.Height;
 
@@ -598,14 +531,13 @@ namespace WindowsFormsApp1
             double scaleX = pictureBoxWidth / imageWidth;
             double scaleY = pictureBoxHeight / imageHeight;
 
-            // Выберите минимальный масштаб, чтобы изображение пропорционально заполняло PictureBox
             double scale = Math.Min(scaleX, scaleY);
 
             // Фактические размеры изображения внутри PictureBox
             double actualImageWidth = imageWidth * scale;
             double actualImageHeight = imageHeight * scale;
 
-            // Вычислите начальные координаты (верхний левый угол) изображения внутри PictureBox
+            // Начальные координаты (верхний левый угол) изображения внутри PictureBox
             double startX = (pictureBoxWidth - actualImageWidth) / 2.0;
             double startY = (pictureBoxHeight - actualImageHeight) / 2.0;
 
@@ -636,26 +568,21 @@ namespace WindowsFormsApp1
 
             foreach (System.Drawing.Point point in linePoints)
             {
-                // Пересчет координат точки из PictureBox в исходное изображение
                 (double transformedX, double transformedY) = TransformPointToImage(point);
 
-                // Получение яркости в точке линии
                 Color pixelColor = bitmap.GetPixel((int)transformedX, (int)transformedY);
                 double brightness = pixelColor.GetBrightness();
 
-                // Обновление максимальной и минимальной яркости
                 maxBrightness = Math.Max(maxBrightness, brightness);
                 minBrightness = Math.Min(minBrightness, brightness);
             }
 
-            // Вычисление контраста
             double contrast = (maxBrightness - minBrightness) / maxBrightness;
 
             labelResult.Text = $"Контраст вдоль линии: {contrast:F10}";
 
             isContrastCalculated = true;
 
-            // Если график отрисован и контраст рассчитан, активируем кнопку "Сохранить результат"
             buttonSaveResults.Enabled = isGraphDisplayed && isContrastCalculated;
         }
 
@@ -674,21 +601,17 @@ namespace WindowsFormsApp1
         {
             if (isDrawing)
             {
-                // Преобразуем координаты точки из `PictureBox` в координаты исходного изображения
                 (double transformedX, double transformedY) = TransformPointToImage(e.Location);
 
-                // Проверяем, находятся ли координаты точки внутри границ изображения
                 if (transformedX < 0 || transformedX >= bitmap.Width || transformedY < 0 || transformedY >= bitmap.Height)
                 {
-                    // Если координаты выходят за пределы границ изображения, прекращаем рисование и выдаем предупреждение
                     isDrawing = false;
                     linePoints = null;
-                    pictureBox.Refresh(); // Очищаем `pictureBox`
+                    pictureBox.Refresh(); 
                     MessageBox.Show("Вы вышли за границы изображения. Линия была обнулена.");
                     return;
                 }
 
-                // Если координаты внутри границ изображения, продолжаем рисовать линию
                 linePoints.Add(e.Location);
 
                 using (Graphics g = pictureBox.CreateGraphics())
@@ -712,15 +635,35 @@ namespace WindowsFormsApp1
             }
         }
 
-        private void StopVideoAndCaptureImage()
+        private void ReleaseCameraAndTimer()
         {
-            if (cameraTimer != null && currentFrame != null)
+            if (cameraTimer != null)
             {
                 cameraTimer.Stop();
+                cameraTimer.Dispose();
+                cameraTimer = null;
+            }
 
-                Bitmap capturedImage = BitmapConverter.ToBitmap(currentFrame);
+            if (videoCapture != null)
+            {
+                videoCapture.Release();
+                videoCapture.Dispose();
+                videoCapture = null;
+            }
+        }
 
-                pictureBox.Image = capturedImage;
+        private void StopVideoAndCaptureImage()
+        {
+            ReleaseCameraAndTimer();
+
+            if (currentFrame != null)
+            {
+                bitmap = BitmapConverter.ToBitmap(currentFrame);
+
+                pictureBox.Image = bitmap;
+
+                currentFrame.Dispose();
+                currentFrame = null;
 
                 stopVideoButton.Enabled = false;
 
@@ -748,11 +691,11 @@ namespace WindowsFormsApp1
             int pictureBoxWidth = pictureBox.Width;
             int pictureBoxHeight = pictureBox.Height;
 
-            int textHeight = 30; // Высота для отображения текста
-            int spacing = 20; // Расстояние между PictureBox, графиком и текстом
+            int textHeight = 30; 
+            int spacing = 20; 
 
             int totalWidth = Math.Max(pictureBoxWidth, chartWidth);
-            // Увеличьте высоту конечного изображения для учёта текста
+
             int totalHeight = pictureBoxHeight + chartHeight + textHeight * 3 + spacing * 4;
 
             Bitmap resultBitmap = new Bitmap(totalWidth, totalHeight);
