@@ -99,7 +99,7 @@ namespace WindowsFormsApp1
                 Maximum = 200,
                 Value = 100,
                 Left = 20,
-                Top = 80
+                Top = 100
             };
             NumericUpDown saturationNumericUpDown = new NumericUpDown
             {
@@ -123,7 +123,7 @@ namespace WindowsFormsApp1
             {
                 Text = "Насыщенность",
                 Left = 20,
-                Top = 60
+                Top = 80
             };
             colorTabPage.Controls.Add(saturationLabel);
 
@@ -132,7 +132,7 @@ namespace WindowsFormsApp1
             {
                 Text = "Баланс белого",
                 Left = 20,
-                Top = 130
+                Top = 150
             };
             colorTabPage.Controls.Add(whiteBalanceCheckBox);
 
@@ -192,7 +192,7 @@ namespace WindowsFormsApp1
                 Maximum = 100,
                 Value = 50,
                 Left = 20,
-                Top = 80
+                Top = 100
             };
             NumericUpDown contrastNumericUpDown = new NumericUpDown
             {
@@ -215,7 +215,7 @@ namespace WindowsFormsApp1
             {
                 Text = "Контраст",
                 Left = 20,
-                Top = 60
+                Top = 80
             };
             exposureTabPage.Controls.Add(contrastLabel);
 
@@ -226,7 +226,7 @@ namespace WindowsFormsApp1
                 Maximum = 50,
                 Value = 0,
                 Left = 20,
-                Top = 130
+                Top = 170
             };
             NumericUpDown exposureNumericUpDown = new NumericUpDown
             {
@@ -249,7 +249,7 @@ namespace WindowsFormsApp1
             {
                 Text = "Экспозиция",
                 Left = 20,
-                Top = 110
+                Top = 150
             };
             exposureTabPage.Controls.Add(exposureLabel);
 
@@ -307,7 +307,7 @@ namespace WindowsFormsApp1
                 Maximum = 200,
                 Value = 100,
                 Left = 20,
-                Top = 80
+                Top = 100
             };
             NumericUpDown gammaNumericUpDown = new NumericUpDown
             {
@@ -328,7 +328,7 @@ namespace WindowsFormsApp1
             {
                 Text = "Гамма",
                 Left = 20,
-                Top = 60
+                Top = 80
             };
             imageTabPage.Controls.Add(gammaLabel);
 
@@ -339,7 +339,7 @@ namespace WindowsFormsApp1
                 Maximum = 100,
                 Value = 50,
                 Left = 20,
-                Top = 130
+                Top = 170
             };
             NumericUpDown backlightCompensationNumericUpDown = new NumericUpDown
             {
@@ -360,7 +360,7 @@ namespace WindowsFormsApp1
             {
                 Text = "Компенсация подсветки",
                 Left = 20,
-                Top = 110
+                Top = 150
             };
             imageTabPage.Controls.Add(backlightCompensationLabel);
 

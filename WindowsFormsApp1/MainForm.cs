@@ -182,7 +182,7 @@ namespace WindowsFormsApp1
 
             pictureBox.Image = modifiedBitmap;
         }
-       
+
         //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         private void ApplyWhiteBalance(ref Mat img)
         {
@@ -541,10 +541,8 @@ namespace WindowsFormsApp1
 
         private void InitializeCamera(string cameraName, string videoFormat, int fps)
         {
-            // Create a new BackgroundWorker
             BackgroundWorker bgWorker = new BackgroundWorker();
 
-            // Set the DoWork event handler
             bgWorker.DoWork += (sender, e) =>
             {
                 int cameraIndex = GetCameraIndex(cameraName);
@@ -558,7 +556,6 @@ namespace WindowsFormsApp1
 
                 if (!Directory.Exists(filesPath))
                 {
-                    // Use Invoke to show the MessageBox on the main UI thread
                     Invoke(new Action(() => MessageBox.Show("Папка Files не найдена в корневой папке проекта.")));
                 }
                 else
@@ -566,12 +563,10 @@ namespace WindowsFormsApp1
                     string shareImagePath = Path.Combine(filesPath, "loading.gif");
                     try
                     {
-                        // Use Invoke to update the picture box from the main UI thread
                         Invoke(new Action(() => pictureBox.Image = Image.FromFile(shareImagePath)));
                     }
                     catch (Exception ex)
                     {
-                        // Use Invoke to show the error message from the main UI thread
                         Invoke(new Action(() => MessageBox.Show($"Ошибка: не удалось загрузить изображение 'loading.gif': {ex.Message}")));
                     }
                 }
@@ -580,9 +575,7 @@ namespace WindowsFormsApp1
 
                 if (!videoCapture.IsOpened())
                 {
-                    // Use Invoke to show the MessageBox on the main UI thread
                     Invoke(new Action(() => MessageBox.Show($"Камера '{cameraName}' не найдена. Пожалуйста, убедитесь, что камера подключена и попробуйте снова.")));
-                    // Use Invoke to enable the start button from the main UI thread
                     Invoke(new Action(() => buttonStartCamera.Enabled = true));
                     return;
                 }
@@ -594,7 +587,6 @@ namespace WindowsFormsApp1
                     videoCapture.Set(VideoCaptureProperties.FourCC, VideoWriter.FourCC(videoFormat[0], videoFormat[1], videoFormat[2], videoFormat[3]));
                 }
 
-                // Use Invoke to set up the timer on the main UI thread
                 Invoke(new Action(() =>
                 {
                     cameraTimer = new Timer
@@ -603,23 +595,18 @@ namespace WindowsFormsApp1
                     };
                     cameraTimer.Tick += CameraTimer_Tick;
                     cameraTimer.Start();
-
-                    // Update the UI elements
                     buttonStartCamera.Enabled = true;
                     stopVideoButton.Enabled = true;
                     buttonCalculateContrast.Enabled = false;
                     buttonDisplayGraph.Enabled = false;
                     buttonOpenDeviceProcessing.Enabled = true;
 
-                    // Clear the picture box image after initialization
                     pictureBox.Image = null;
                 }));
             };
 
-            // Run the worker in the background
             bgWorker.RunWorkerAsync();
         }
-
 
         private int GetCameraIndex(string cameraName)
         {
