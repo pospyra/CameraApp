@@ -9,21 +9,30 @@ namespace WindowsFormsApp1
 
         // "Цвет" таб
         private TrackBar hueTrackBar;
+        private NumericUpDown hueNumericUpDown;
         private TrackBar saturationTrackBar;
+        private NumericUpDown saturationNumericUpDown;
         private CheckBox whiteBalanceCheckBox;
 
         // "Экспозиция" таб
         private TrackBar brightnessTrackBar;
+        private NumericUpDown brightnessNumericUpDown;
         private TrackBar contrastTrackBar;
+        private NumericUpDown contrastNumericUpDown;
         private TrackBar exposureTrackBar;
+        private NumericUpDown exposureNumericUpDown;
 
         // "Изображение" таб
         private TrackBar sharpnessTrackBar;
+        private NumericUpDown sharpnessNumericUpDown;
         private TrackBar gammaTrackBar;
+        private NumericUpDown gammaNumericUpDown;
         private TrackBar backlightCompensationTrackBar;
+        private NumericUpDown backlightCompensationNumericUpDown;
 
         // Ссылка на MainForm
         private MainForm mainForm;
+
         public DeviceProcessing(MainForm form)
         {
             InitializeComponent();
@@ -36,7 +45,6 @@ namespace WindowsFormsApp1
 
         private void InitializeForm()
         {
-
             tabControl = new TabControl
             {
                 Left = 20,
@@ -45,7 +53,7 @@ namespace WindowsFormsApp1
                 Height = 400
             };
 
-            // Create tabs
+            // Создаем вкладки
             CreateColorTab();
             CreateExposureTab();
             CreateImageTab();
@@ -55,7 +63,7 @@ namespace WindowsFormsApp1
 
         private void CreateColorTab()
         {
-            // Create a tab page for color settings
+            // Создаем вкладку для настроек цвета
             TabPage colorTabPage = new TabPage("Цвет");
 
             // Оттенок
@@ -67,7 +75,7 @@ namespace WindowsFormsApp1
                 Left = 20,
                 Top = 30
             };
-            NumericUpDown hueNumericUpDown = new NumericUpDown
+            hueNumericUpDown = new NumericUpDown
             {
                 Minimum = -180,
                 Maximum = 180,
@@ -79,7 +87,11 @@ namespace WindowsFormsApp1
 
             // Синхронизируем значения между TrackBar и NumericUpDown
             hueTrackBar.Scroll += (sender, e) => hueNumericUpDown.Value = hueTrackBar.Value;
-            hueNumericUpDown.ValueChanged += (sender, e) => hueTrackBar.Value = (int)hueNumericUpDown.Value;
+            hueNumericUpDown.ValueChanged += (sender, e) =>
+            {
+                hueTrackBar.Value = (int)hueNumericUpDown.Value;
+                ApplySettings(); // Вызов ApplySettings
+            };
 
             colorTabPage.Controls.Add(hueTrackBar);
             colorTabPage.Controls.Add(hueNumericUpDown);
@@ -101,7 +113,7 @@ namespace WindowsFormsApp1
                 Left = 20,
                 Top = 100
             };
-            NumericUpDown saturationNumericUpDown = new NumericUpDown
+            saturationNumericUpDown = new NumericUpDown
             {
                 Minimum = 0,
                 Maximum = 200,
@@ -113,12 +125,15 @@ namespace WindowsFormsApp1
 
             // Синхронизируем значения между TrackBar и NumericUpDown
             saturationTrackBar.Scroll += (sender, e) => saturationNumericUpDown.Value = saturationTrackBar.Value;
-            saturationNumericUpDown.ValueChanged += (sender, e) => saturationTrackBar.Value = (int)saturationNumericUpDown.Value;
+            saturationNumericUpDown.ValueChanged += (sender, e) =>
+            {
+                saturationTrackBar.Value = (int)saturationNumericUpDown.Value;
+                ApplySettings(); // Вызов ApplySettings
+            };
 
             colorTabPage.Controls.Add(saturationTrackBar);
             colorTabPage.Controls.Add(saturationNumericUpDown);
 
-            // Добавляем лейбл "Насыщенность" до добавления элементов управления
             Label saturationLabel = new Label
             {
                 Text = "Насыщенность",
@@ -134,21 +149,17 @@ namespace WindowsFormsApp1
                 Left = 20,
                 Top = 150
             };
+            whiteBalanceCheckBox.CheckedChanged += (sender, e) => ApplySettings();
             colorTabPage.Controls.Add(whiteBalanceCheckBox);
 
-            // Add the tab page to the tab control
+            // Добавляем вкладку в TabControl
             tabControl.TabPages.Add(colorTabPage);
-
-            // Add event handlers
-            hueTrackBar.Scroll += TrackBar_Scroll;
-            saturationTrackBar.Scroll += TrackBar_Scroll;
-            whiteBalanceCheckBox.CheckedChanged += CheckBox_CheckedChanged;
         }
 
 
         private void CreateExposureTab()
         {
-            // Create a tab page for exposure settings
+            // Создаем вкладку для настроек экспозиции
             TabPage exposureTabPage = new TabPage("Экспозиция");
 
             // Яркость
@@ -160,7 +171,7 @@ namespace WindowsFormsApp1
                 Left = 20,
                 Top = 30
             };
-            NumericUpDown brightnessNumericUpDown = new NumericUpDown
+            brightnessNumericUpDown = new NumericUpDown
             {
                 Minimum = 0,
                 Maximum = 100,
@@ -172,7 +183,11 @@ namespace WindowsFormsApp1
 
             // Синхронизируем значения между TrackBar и NumericUpDown
             brightnessTrackBar.Scroll += (sender, e) => brightnessNumericUpDown.Value = brightnessTrackBar.Value;
-            brightnessNumericUpDown.ValueChanged += (sender, e) => brightnessTrackBar.Value = (int)brightnessNumericUpDown.Value;
+            brightnessNumericUpDown.ValueChanged += (sender, e) =>
+            {
+                brightnessTrackBar.Value = (int)brightnessNumericUpDown.Value;
+                ApplySettings(); // Вызов ApplySettings
+            };
 
             exposureTabPage.Controls.Add(brightnessTrackBar);
             exposureTabPage.Controls.Add(brightnessNumericUpDown);
@@ -194,7 +209,7 @@ namespace WindowsFormsApp1
                 Left = 20,
                 Top = 100
             };
-            NumericUpDown contrastNumericUpDown = new NumericUpDown
+            contrastNumericUpDown = new NumericUpDown
             {
                 Minimum = 0,
                 Maximum = 100,
@@ -206,7 +221,11 @@ namespace WindowsFormsApp1
 
             // Синхронизируем значения между TrackBar и NumericUpDown
             contrastTrackBar.Scroll += (sender, e) => contrastNumericUpDown.Value = contrastTrackBar.Value;
-            contrastNumericUpDown.ValueChanged += (sender, e) => contrastTrackBar.Value = (int)contrastNumericUpDown.Value;
+            contrastNumericUpDown.ValueChanged += (sender, e) =>
+            {
+                contrastTrackBar.Value = (int)contrastNumericUpDown.Value;
+                ApplySettings(); // Вызов ApplySettings
+            };
 
             exposureTabPage.Controls.Add(contrastTrackBar);
             exposureTabPage.Controls.Add(contrastNumericUpDown);
@@ -228,7 +247,7 @@ namespace WindowsFormsApp1
                 Left = 20,
                 Top = 170
             };
-            NumericUpDown exposureNumericUpDown = new NumericUpDown
+            exposureNumericUpDown = new NumericUpDown
             {
                 Minimum = -50,
                 Maximum = 50,
@@ -240,7 +259,11 @@ namespace WindowsFormsApp1
 
             // Синхронизируем значения между TrackBar и NumericUpDown
             exposureTrackBar.Scroll += (sender, e) => exposureNumericUpDown.Value = exposureTrackBar.Value;
-            exposureNumericUpDown.ValueChanged += (sender, e) => exposureTrackBar.Value = (int)exposureNumericUpDown.Value;
+            exposureNumericUpDown.ValueChanged += (sender, e) =>
+            {
+                exposureTrackBar.Value = (int)exposureNumericUpDown.Value;
+                ApplySettings(); // Вызов ApplySettings
+            };
 
             exposureTabPage.Controls.Add(exposureTrackBar);
             exposureTabPage.Controls.Add(exposureNumericUpDown);
@@ -253,19 +276,13 @@ namespace WindowsFormsApp1
             };
             exposureTabPage.Controls.Add(exposureLabel);
 
-            // Add the tab page to the tab control
+            // Добавляем вкладку в TabControl
             tabControl.TabPages.Add(exposureTabPage);
-
-            // Add event handlers
-            brightnessTrackBar.Scroll += TrackBar_Scroll;
-            contrastTrackBar.Scroll += TrackBar_Scroll;
-            exposureTrackBar.Scroll += TrackBar_Scroll;
         }
-
 
         private void CreateImageTab()
         {
-            // Create a tab page for image settings
+            // Создаем вкладку для настроек изображения
             TabPage imageTabPage = new TabPage("Изображение");
 
             // Острота
@@ -277,7 +294,7 @@ namespace WindowsFormsApp1
                 Left = 20,
                 Top = 30
             };
-            NumericUpDown sharpnessNumericUpDown = new NumericUpDown
+            sharpnessNumericUpDown = new NumericUpDown
             {
                 Minimum = 0,
                 Maximum = 100,
@@ -286,9 +303,15 @@ namespace WindowsFormsApp1
                 Top = sharpnessTrackBar.Top,
                 Width = 60
             };
+
             // Синхронизируем значения между TrackBar и NumericUpDown
             sharpnessTrackBar.Scroll += (sender, e) => sharpnessNumericUpDown.Value = sharpnessTrackBar.Value;
-            sharpnessNumericUpDown.ValueChanged += (sender, e) => sharpnessTrackBar.Value = (int)sharpnessNumericUpDown.Value;
+            sharpnessNumericUpDown.ValueChanged += (sender, e) =>
+            {
+                sharpnessTrackBar.Value = (int)sharpnessNumericUpDown.Value;
+                ApplySettings(); // Вызов ApplySettings
+            };
+
             imageTabPage.Controls.Add(sharpnessTrackBar);
             imageTabPage.Controls.Add(sharpnessNumericUpDown);
 
@@ -309,7 +332,7 @@ namespace WindowsFormsApp1
                 Left = 20,
                 Top = 100
             };
-            NumericUpDown gammaNumericUpDown = new NumericUpDown
+            gammaNumericUpDown = new NumericUpDown
             {
                 Minimum = 0,
                 Maximum = 200,
@@ -318,9 +341,15 @@ namespace WindowsFormsApp1
                 Top = gammaTrackBar.Top,
                 Width = 60
             };
+
             // Синхронизируем значения между TrackBar и NumericUpDown
             gammaTrackBar.Scroll += (sender, e) => gammaNumericUpDown.Value = gammaTrackBar.Value;
-            gammaNumericUpDown.ValueChanged += (sender, e) => gammaTrackBar.Value = (int)gammaNumericUpDown.Value;
+            gammaNumericUpDown.ValueChanged += (sender, e) =>
+            {
+                gammaTrackBar.Value = (int)gammaNumericUpDown.Value;
+                ApplySettings(); // Вызов ApplySettings
+            };
+
             imageTabPage.Controls.Add(gammaTrackBar);
             imageTabPage.Controls.Add(gammaNumericUpDown);
 
@@ -341,7 +370,7 @@ namespace WindowsFormsApp1
                 Left = 20,
                 Top = 170
             };
-            NumericUpDown backlightCompensationNumericUpDown = new NumericUpDown
+            backlightCompensationNumericUpDown = new NumericUpDown
             {
                 Minimum = 0,
                 Maximum = 100,
@@ -350,9 +379,15 @@ namespace WindowsFormsApp1
                 Top = backlightCompensationTrackBar.Top,
                 Width = 60
             };
+
             // Синхронизируем значения между TrackBar и NumericUpDown
             backlightCompensationTrackBar.Scroll += (sender, e) => backlightCompensationNumericUpDown.Value = backlightCompensationTrackBar.Value;
-            backlightCompensationNumericUpDown.ValueChanged += (sender, e) => backlightCompensationTrackBar.Value = (int)backlightCompensationNumericUpDown.Value;
+            backlightCompensationNumericUpDown.ValueChanged += (sender, e) =>
+            {
+                backlightCompensationTrackBar.Value = (int)backlightCompensationNumericUpDown.Value;
+                ApplySettings(); // Вызов ApplySettings
+            };
+
             imageTabPage.Controls.Add(backlightCompensationTrackBar);
             imageTabPage.Controls.Add(backlightCompensationNumericUpDown);
 
@@ -364,31 +399,24 @@ namespace WindowsFormsApp1
             };
             imageTabPage.Controls.Add(backlightCompensationLabel);
 
-            // Add the tab page to the tab control
+            // Добавляем вкладку в TabControl
             tabControl.TabPages.Add(imageTabPage);
-
-            // Add event handlers
-            sharpnessTrackBar.Scroll += TrackBar_Scroll;
-            gammaTrackBar.Scroll += TrackBar_Scroll;
-            backlightCompensationTrackBar.Scroll += TrackBar_Scroll;
         }
 
         private void TrackBar_Scroll(object sender, EventArgs e)
         {
-            // Apply the settings when a trackbar value changes
+            // Применение настроек при изменении значения трекбара
             ApplySettings();
         }
 
         private void CheckBox_CheckedChanged(object sender, EventArgs e)
         {
-            // Apply the settings when the white balance checkbox value changes
+            // Применение настроек при изменении значения чекбокса
             ApplySettings();
         }
 
-
         private void ApplySettings()
         {
-
             // Получение значений трекбаров и чекбокса
             double hue = hueTrackBar.Value;
             double saturation = saturationTrackBar.Value / 100.0;
@@ -404,11 +432,5 @@ namespace WindowsFormsApp1
             // Вызов ApplySettings с параметрами из трекбаров и чекбокса
             mainForm.ApplySettings(hue, saturation, whiteBalance, brightness, contrast, exposure, sharpness, gamma, backlightCompensation);
         }
-
-
-        private void ButtonApplySettings_Click(object sender, EventArgs e)
-        {
-        }
     }
 }
-
