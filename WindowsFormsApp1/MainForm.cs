@@ -2,8 +2,10 @@
 using OpenCvSharp.Extensions;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
@@ -242,13 +244,19 @@ namespace WindowsFormsApp1
 
         private void ButtonStartCamera_Click(object sender, EventArgs e)
         {
+            // Установка начальных значений
             pictureBox.Image = null;
+            labelResult.Text = string.Empty;
             if (chart != null)
             {
                 chart.Series.Clear();
             }
 
-            labelResult.Text = "";
+            buttonStartCamera.Enabled = false;
+            stopVideoButton.Enabled = false;
+            buttonCalculateContrast.Enabled = false;
+            buttonDisplayGraph.Enabled = false;
+            buttonOpenDeviceProcessing.Enabled = false;
 
             using (var deviceSettingForm = new DeviceSettingForm())
             {
@@ -258,13 +266,12 @@ namespace WindowsFormsApp1
                     var selectedFormat = deviceSettingForm.SelectedFormat;
                     var selectedFPS = deviceSettingForm.SelectedFPS;
 
+                    // Запускаем инициализацию камеры
                     InitializeCamera(selectedCamera, selectedFormat, selectedFPS);
-
-                    stopVideoButton.Enabled = true;
-
-                    buttonCalculateContrast.Enabled = false;
-                    buttonDisplayGraph.Enabled = false;
-                    buttonSaveResults.Enabled = false;
+                }
+                else
+                {
+                    buttonStartCamera.Enabled = true;
                 }
             }
         }
@@ -534,30 +541,85 @@ namespace WindowsFormsApp1
 
         private void InitializeCamera(string cameraName, string videoFormat, int fps)
         {
-            int cameraIndex = GetCameraIndex(cameraName);
+            // Create a new BackgroundWorker
+            BackgroundWorker bgWorker = new BackgroundWorker();
 
-            videoCapture = new VideoCapture(cameraIndex);
-
-            if (!videoCapture.IsOpened())
+            // Set the DoWork event handler
+            bgWorker.DoWork += (sender, e) =>
             {
-                MessageBox.Show($"Камера '{cameraName}' не найдена. Пожалуйста, убедитесь, что камера подключена и попробуйте снова.");
-                return;
-            }
+                int cameraIndex = GetCameraIndex(cameraName);
+                string rootPath = Directory.GetParent(
+                    Directory.GetParent(
+                        Directory.GetParent(Directory.GetCurrentDirectory()).FullName
+                    ).FullName
+                ).FullName;
 
-            videoCapture.Fps = fps;
+                string filesPath = Path.Combine(rootPath, "Files");
 
-            if (!string.IsNullOrEmpty(videoFormat) && videoFormat.Length >= 4)
-            {
-                videoCapture.Set(VideoCaptureProperties.FourCC, VideoWriter.FourCC(videoFormat[0], videoFormat[1], videoFormat[2], videoFormat[3]));
-            }
+                if (!Directory.Exists(filesPath))
+                {
+                    // Use Invoke to show the MessageBox on the main UI thread
+                    Invoke(new Action(() => MessageBox.Show("Папка Files не найдена в корневой папке проекта.")));
+                }
+                else
+                {
+                    string shareImagePath = Path.Combine(filesPath, "loading.gif");
+                    try
+                    {
+                        // Use Invoke to update the picture box from the main UI thread
+                        Invoke(new Action(() => pictureBox.Image = Image.FromFile(shareImagePath)));
+                    }
+                    catch (Exception ex)
+                    {
+                        // Use Invoke to show the error message from the main UI thread
+                        Invoke(new Action(() => MessageBox.Show($"Ошибка: не удалось загрузить изображение 'loading.gif': {ex.Message}")));
+                    }
+                }
 
-            cameraTimer = new Timer
-            {
-                Interval = 1000 / fps
+                videoCapture = new VideoCapture(cameraIndex);
+
+                if (!videoCapture.IsOpened())
+                {
+                    // Use Invoke to show the MessageBox on the main UI thread
+                    Invoke(new Action(() => MessageBox.Show($"Камера '{cameraName}' не найдена. Пожалуйста, убедитесь, что камера подключена и попробуйте снова.")));
+                    // Use Invoke to enable the start button from the main UI thread
+                    Invoke(new Action(() => buttonStartCamera.Enabled = true));
+                    return;
+                }
+
+                videoCapture.Fps = fps;
+
+                if (!string.IsNullOrEmpty(videoFormat) && videoFormat.Length >= 4)
+                {
+                    videoCapture.Set(VideoCaptureProperties.FourCC, VideoWriter.FourCC(videoFormat[0], videoFormat[1], videoFormat[2], videoFormat[3]));
+                }
+
+                // Use Invoke to set up the timer on the main UI thread
+                Invoke(new Action(() =>
+                {
+                    cameraTimer = new Timer
+                    {
+                        Interval = 1000 / fps
+                    };
+                    cameraTimer.Tick += CameraTimer_Tick;
+                    cameraTimer.Start();
+
+                    // Update the UI elements
+                    buttonStartCamera.Enabled = true;
+                    stopVideoButton.Enabled = true;
+                    buttonCalculateContrast.Enabled = false;
+                    buttonDisplayGraph.Enabled = false;
+                    buttonOpenDeviceProcessing.Enabled = true;
+
+                    // Clear the picture box image after initialization
+                    pictureBox.Image = null;
+                }));
             };
-            cameraTimer.Tick += CameraTimer_Tick;
-            cameraTimer.Start();
+
+            // Run the worker in the background
+            bgWorker.RunWorkerAsync();
         }
+
 
         private int GetCameraIndex(string cameraName)
         {
