@@ -5,26 +5,22 @@ namespace WindowsFormsApp1
 {
     public partial class DeviceProcessing : Form
     {
-        // Поле для TabControl
         private TabControl tabControl;
 
-        // Цвет
-        private TrackBar trackBarHue;
-        private TrackBar trackBarSaturation;
-        private CheckBox checkBoxWhiteBalance;
+        // "Цвет" таб
+        private TrackBar hueTrackBar;
+        private TrackBar saturationTrackBar;
+        private CheckBox whiteBalanceCheckBox;
 
-        // Экспозиция
-        private TrackBar trackBarBrightness;
-        private TrackBar trackBarContrast;
-        private TrackBar trackBarExposure;
+        // "Экспозиция" таб
+        private TrackBar brightnessTrackBar;
+        private TrackBar contrastTrackBar;
+        private TrackBar exposureTrackBar;
 
-        // Изображение
-        private TrackBar trackBarSharpness;
-        private TrackBar trackBarGamma;
-        private TrackBar trackBarBacklightCompensation;
-
-        // Кнопка для применения настроек
-        private Button buttonApplySettings;
+        // "Изображение" таб
+        private TrackBar sharpnessTrackBar;
+        private TrackBar gammaTrackBar;
+        private TrackBar backlightCompensationTrackBar;
 
         // Ссылка на MainForm
         private MainForm mainForm;
@@ -40,177 +36,379 @@ namespace WindowsFormsApp1
 
         private void InitializeForm()
         {
-            tabControl = new TabControl();
-            tabControl.Dock = DockStyle.Fill;
 
-            // Создайте вкладки для каждой категории настроек (Цвет, Экспозиция, Изображение)
+            tabControl = new TabControl
+            {
+                Left = 20,
+                Top = 10,
+                Width = 300,
+                Height = 400
+            };
+
+            // Create tabs
             CreateColorTab();
             CreateExposureTab();
             CreateImageTab();
 
-            // Добавьте кнопку "Применить настройки"
-            buttonApplySettings = new Button
-            {
-                Text = "Применить настройки",
-                Dock = DockStyle.Bottom
-            };
-            buttonApplySettings.Click += ButtonApplySettings_Click;
-            Controls.Add(buttonApplySettings);
-
-            // Добавьте TabControl на форму
             Controls.Add(tabControl);
         }
+
         private void CreateColorTab()
         {
-            TabPage tabColor = new TabPage("Цвет");
+            // Create a tab page for color settings
+            TabPage colorTabPage = new TabPage("Цвет");
 
-            // Создаем FlowLayoutPanel для организации элементов управления
-            FlowLayoutPanel colorPanel = new FlowLayoutPanel
+            // Оттенок
+            hueTrackBar = new TrackBar
             {
-                Dock = DockStyle.Fill,
-                FlowDirection = FlowDirection.TopDown // Элементы управления выстраиваются вертикально
+                Minimum = -180,
+                Maximum = 180,
+                Value = 0,
+                Left = 20,
+                Top = 30
+            };
+            NumericUpDown hueNumericUpDown = new NumericUpDown
+            {
+                Minimum = -180,
+                Maximum = 180,
+                Value = 0,
+                Left = hueTrackBar.Right + 10,
+                Top = hueTrackBar.Top,
+                Width = 60
             };
 
-            // Добавляем элементы управления для оттенка
-            colorPanel.Controls.Add(new Label { Text = "Оттенок" });
-            colorPanel.Controls.Add(trackBarHue = new TrackBar
-            {
-                Minimum = -100,
-                Maximum = 100,
-                Value = 0,
-                Dock = DockStyle.Top
-            });
+            // Синхронизируем значения между TrackBar и NumericUpDown
+            hueTrackBar.Scroll += (sender, e) => hueNumericUpDown.Value = hueTrackBar.Value;
+            hueNumericUpDown.ValueChanged += (sender, e) => hueTrackBar.Value = (int)hueNumericUpDown.Value;
 
-            // Добавляем элементы управления для насыщенности
-            colorPanel.Controls.Add(new Label { Text = "Насыщенность" });
-            colorPanel.Controls.Add(trackBarSaturation = new TrackBar
+            colorTabPage.Controls.Add(hueTrackBar);
+            colorTabPage.Controls.Add(hueNumericUpDown);
+
+            Label hueLabel = new Label
+            {
+                Text = "Оттенок",
+                Left = 20,
+                Top = 10
+            };
+            colorTabPage.Controls.Add(hueLabel);
+
+            // Насыщенность
+            saturationTrackBar = new TrackBar
+            {
+                Minimum = 0,
+                Maximum = 200,
+                Value = 100,
+                Left = 20,
+                Top = 80
+            };
+            NumericUpDown saturationNumericUpDown = new NumericUpDown
+            {
+                Minimum = 0,
+                Maximum = 200,
+                Value = 100,
+                Left = saturationTrackBar.Right + 10,
+                Top = saturationTrackBar.Top,
+                Width = 60
+            };
+
+            // Синхронизируем значения между TrackBar и NumericUpDown
+            saturationTrackBar.Scroll += (sender, e) => saturationNumericUpDown.Value = saturationTrackBar.Value;
+            saturationNumericUpDown.ValueChanged += (sender, e) => saturationTrackBar.Value = (int)saturationNumericUpDown.Value;
+
+            colorTabPage.Controls.Add(saturationTrackBar);
+            colorTabPage.Controls.Add(saturationNumericUpDown);
+
+            // Добавляем лейбл "Насыщенность" до добавления элементов управления
+            Label saturationLabel = new Label
+            {
+                Text = "Насыщенность",
+                Left = 20,
+                Top = 60
+            };
+            colorTabPage.Controls.Add(saturationLabel);
+
+            // Баланс белого
+            whiteBalanceCheckBox = new CheckBox
+            {
+                Text = "Баланс белого",
+                Left = 20,
+                Top = 130
+            };
+            colorTabPage.Controls.Add(whiteBalanceCheckBox);
+
+            // Add the tab page to the tab control
+            tabControl.TabPages.Add(colorTabPage);
+
+            // Add event handlers
+            hueTrackBar.Scroll += TrackBar_Scroll;
+            saturationTrackBar.Scroll += TrackBar_Scroll;
+            whiteBalanceCheckBox.CheckedChanged += CheckBox_CheckedChanged;
+        }
+
+
+        private void CreateExposureTab()
+        {
+            // Create a tab page for exposure settings
+            TabPage exposureTabPage = new TabPage("Экспозиция");
+
+            // Яркость
+            brightnessTrackBar = new TrackBar
             {
                 Minimum = 0,
                 Maximum = 100,
                 Value = 50,
-                Dock = DockStyle.Top
-            });
-
-            // Добавляем элементы управления для баланса белого
-            colorPanel.Controls.Add(checkBoxWhiteBalance = new CheckBox
+                Left = 20,
+                Top = 30
+            };
+            NumericUpDown brightnessNumericUpDown = new NumericUpDown
             {
-                Text = "Баланс белого",
-                Dock = DockStyle.Top
-            });
-
-            // Добавляем панель на вкладку
-            tabColor.Controls.Add(colorPanel);
-            tabControl.Controls.Add(tabColor);
-        }
-
-        private void CreateExposureTab()
-        {
-            TabPage tabExposure = new TabPage("Экспозиция");
-
-            // Создаем FlowLayoutPanel для организации элементов управления
-            FlowLayoutPanel exposurePanel = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                FlowDirection = FlowDirection.TopDown // Элементы управления выстраиваются вертикально
+                Minimum = 0,
+                Maximum = 100,
+                Value = 50,
+                Left = brightnessTrackBar.Right + 10,
+                Top = brightnessTrackBar.Top,
+                Width = 60
             };
 
-            // Добавляем элементы управления для яркости
-            exposurePanel.Controls.Add(new Label { Text = "Яркость" });
-            exposurePanel.Controls.Add(trackBarBrightness = new TrackBar
+            // Синхронизируем значения между TrackBar и NumericUpDown
+            brightnessTrackBar.Scroll += (sender, e) => brightnessNumericUpDown.Value = brightnessTrackBar.Value;
+            brightnessNumericUpDown.ValueChanged += (sender, e) => brightnessTrackBar.Value = (int)brightnessNumericUpDown.Value;
+
+            exposureTabPage.Controls.Add(brightnessTrackBar);
+            exposureTabPage.Controls.Add(brightnessNumericUpDown);
+
+            Label brightnessLabel = new Label
             {
-                Minimum = -10,
-                Maximum = 10,
+                Text = "Яркость",
+                Left = 20,
+                Top = 10
+            };
+            exposureTabPage.Controls.Add(brightnessLabel);
+
+            // Контраст
+            contrastTrackBar = new TrackBar
+            {
+                Minimum = 0,
+                Maximum = 100,
+                Value = 50,
+                Left = 20,
+                Top = 80
+            };
+            NumericUpDown contrastNumericUpDown = new NumericUpDown
+            {
+                Minimum = 0,
+                Maximum = 100,
+                Value = 50,
+                Left = contrastTrackBar.Right + 10,
+                Top = contrastTrackBar.Top,
+                Width = 60
+            };
+
+            // Синхронизируем значения между TrackBar и NumericUpDown
+            contrastTrackBar.Scroll += (sender, e) => contrastNumericUpDown.Value = contrastTrackBar.Value;
+            contrastNumericUpDown.ValueChanged += (sender, e) => contrastTrackBar.Value = (int)contrastNumericUpDown.Value;
+
+            exposureTabPage.Controls.Add(contrastTrackBar);
+            exposureTabPage.Controls.Add(contrastNumericUpDown);
+
+            Label contrastLabel = new Label
+            {
+                Text = "Контраст",
+                Left = 20,
+                Top = 60
+            };
+            exposureTabPage.Controls.Add(contrastLabel);
+
+            // Экспозиция
+            exposureTrackBar = new TrackBar
+            {
+                Minimum = -50,
+                Maximum = 50,
                 Value = 0,
-                Dock = DockStyle.Top
-            });
-
-            // Добавляем элементы управления для контраста
-            exposurePanel.Controls.Add(new Label { Text = "Контраст" });
-            exposurePanel.Controls.Add(trackBarContrast = new TrackBar
+                Left = 20,
+                Top = 130
+            };
+            NumericUpDown exposureNumericUpDown = new NumericUpDown
             {
-                Minimum = 0,
-                Maximum = 10,
-                Value = 5,
-                Dock = DockStyle.Top
-            });
+                Minimum = -50,
+                Maximum = 50,
+                Value = 0,
+                Left = exposureTrackBar.Right + 10,
+                Top = exposureTrackBar.Top,
+                Width = 60
+            };
 
-            // Добавляем элементы управления для экспозиции
-            exposurePanel.Controls.Add(new Label { Text = "Экспозиция" });
-            exposurePanel.Controls.Add(trackBarExposure = new TrackBar
+            // Синхронизируем значения между TrackBar и NumericUpDown
+            exposureTrackBar.Scroll += (sender, e) => exposureNumericUpDown.Value = exposureTrackBar.Value;
+            exposureNumericUpDown.ValueChanged += (sender, e) => exposureTrackBar.Value = (int)exposureNumericUpDown.Value;
+
+            exposureTabPage.Controls.Add(exposureTrackBar);
+            exposureTabPage.Controls.Add(exposureNumericUpDown);
+
+            Label exposureLabel = new Label
             {
-                Minimum = 0,
-                Maximum = 10,
-                Value = 5,
-                Dock = DockStyle.Top
-            });
+                Text = "Экспозиция",
+                Left = 20,
+                Top = 110
+            };
+            exposureTabPage.Controls.Add(exposureLabel);
 
-            // Добавляем панель на вкладку
-            tabExposure.Controls.Add(exposurePanel);
-            tabControl.Controls.Add(tabExposure);
+            // Add the tab page to the tab control
+            tabControl.TabPages.Add(exposureTabPage);
+
+            // Add event handlers
+            brightnessTrackBar.Scroll += TrackBar_Scroll;
+            contrastTrackBar.Scroll += TrackBar_Scroll;
+            exposureTrackBar.Scroll += TrackBar_Scroll;
         }
+
 
         private void CreateImageTab()
         {
-            TabPage tabImage = new TabPage("Изображение");
+            // Create a tab page for image settings
+            TabPage imageTabPage = new TabPage("Изображение");
 
-            // Создаем FlowLayoutPanel для организации элементов управления
-            FlowLayoutPanel imagePanel = new FlowLayoutPanel
+            // Острота
+            sharpnessTrackBar = new TrackBar
             {
-                Dock = DockStyle.Fill,
-                FlowDirection = FlowDirection.TopDown // Элементы управления выстраиваются вертикально
+                Minimum = 0,
+                Maximum = 100,
+                Value = 100,
+                Left = 20,
+                Top = 30
             };
-
-            // Добавляем элементы управления для остроты
-            imagePanel.Controls.Add(new Label { Text = "Острота" });
-            imagePanel.Controls.Add(trackBarSharpness = new TrackBar
+            NumericUpDown sharpnessNumericUpDown = new NumericUpDown
             {
                 Minimum = 0,
-                Maximum = 10,
-                Value = 5,
-                Dock = DockStyle.Top
-            });
+                Maximum = 100,
+                Value = 100,
+                Left = sharpnessTrackBar.Right + 10,
+                Top = sharpnessTrackBar.Top,
+                Width = 60
+            };
+            // Синхронизируем значения между TrackBar и NumericUpDown
+            sharpnessTrackBar.Scroll += (sender, e) => sharpnessNumericUpDown.Value = sharpnessTrackBar.Value;
+            sharpnessNumericUpDown.ValueChanged += (sender, e) => sharpnessTrackBar.Value = (int)sharpnessNumericUpDown.Value;
+            imageTabPage.Controls.Add(sharpnessTrackBar);
+            imageTabPage.Controls.Add(sharpnessNumericUpDown);
 
-            // Добавляем элементы управления для гаммы
-            imagePanel.Controls.Add(new Label { Text = "Гамма" });
-            imagePanel.Controls.Add(trackBarGamma = new TrackBar
+            Label sharpnessLabel = new Label
+            {
+                Text = "Острота",
+                Left = 20,
+                Top = 10
+            };
+            imageTabPage.Controls.Add(sharpnessLabel);
+
+            // Гамма
+            gammaTrackBar = new TrackBar
             {
                 Minimum = 0,
-                Maximum = 10,
-                Value = 5,
-                Dock = DockStyle.Top
-            });
-
-            // Добавляем элементы управления для компенсации подсветки
-            imagePanel.Controls.Add(new Label { Text = "Компенсация подсветки" });
-            imagePanel.Controls.Add(trackBarBacklightCompensation = new TrackBar
+                Maximum = 200,
+                Value = 100,
+                Left = 20,
+                Top = 80
+            };
+            NumericUpDown gammaNumericUpDown = new NumericUpDown
             {
                 Minimum = 0,
-                Maximum = 10,
-                Value = 5,
-                Dock = DockStyle.Top
-            });
+                Maximum = 200,
+                Value = 100,
+                Left = gammaTrackBar.Right + 10,
+                Top = gammaTrackBar.Top,
+                Width = 60
+            };
+            // Синхронизируем значения между TrackBar и NumericUpDown
+            gammaTrackBar.Scroll += (sender, e) => gammaNumericUpDown.Value = gammaTrackBar.Value;
+            gammaNumericUpDown.ValueChanged += (sender, e) => gammaTrackBar.Value = (int)gammaNumericUpDown.Value;
+            imageTabPage.Controls.Add(gammaTrackBar);
+            imageTabPage.Controls.Add(gammaNumericUpDown);
 
-            // Добавляем панель на вкладку
-            tabImage.Controls.Add(imagePanel);
-            tabControl.Controls.Add(tabImage);
+            Label gammaLabel = new Label
+            {
+                Text = "Гамма",
+                Left = 20,
+                Top = 60
+            };
+            imageTabPage.Controls.Add(gammaLabel);
+
+            // Компенсация подсветки
+            backlightCompensationTrackBar = new TrackBar
+            {
+                Minimum = 0,
+                Maximum = 100,
+                Value = 50,
+                Left = 20,
+                Top = 130
+            };
+            NumericUpDown backlightCompensationNumericUpDown = new NumericUpDown
+            {
+                Minimum = 0,
+                Maximum = 100,
+                Value = 50,
+                Left = backlightCompensationTrackBar.Right + 10,
+                Top = backlightCompensationTrackBar.Top,
+                Width = 60
+            };
+            // Синхронизируем значения между TrackBar и NumericUpDown
+            backlightCompensationTrackBar.Scroll += (sender, e) => backlightCompensationNumericUpDown.Value = backlightCompensationTrackBar.Value;
+            backlightCompensationNumericUpDown.ValueChanged += (sender, e) => backlightCompensationTrackBar.Value = (int)backlightCompensationNumericUpDown.Value;
+            imageTabPage.Controls.Add(backlightCompensationTrackBar);
+            imageTabPage.Controls.Add(backlightCompensationNumericUpDown);
+
+            Label backlightCompensationLabel = new Label
+            {
+                Text = "Компенсация подсветки",
+                Left = 20,
+                Top = 110
+            };
+            imageTabPage.Controls.Add(backlightCompensationLabel);
+
+            // Add the tab page to the tab control
+            tabControl.TabPages.Add(imageTabPage);
+
+            // Add event handlers
+            sharpnessTrackBar.Scroll += TrackBar_Scroll;
+            gammaTrackBar.Scroll += TrackBar_Scroll;
+            backlightCompensationTrackBar.Scroll += TrackBar_Scroll;
         }
+
+        private void TrackBar_Scroll(object sender, EventArgs e)
+        {
+            // Apply the settings when a trackbar value changes
+            ApplySettings();
+        }
+
+        private void CheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            // Apply the settings when the white balance checkbox value changes
+            ApplySettings();
+        }
+
+
+        private void ApplySettings()
+        {
+
+            // Получение значений трекбаров и чекбокса
+            double hue = hueTrackBar.Value;
+            double saturation = saturationTrackBar.Value / 100.0;
+            double sharpness = sharpnessTrackBar.Value / 100.0;
+            double gamma = gammaTrackBar.Value / 100.0;
+            double backlightCompensation = backlightCompensationTrackBar.Value / 100.0;
+
+            double brightness = brightnessTrackBar.Value - 50;
+            double contrast = contrastTrackBar.Value / 50.0;
+            double exposure = exposureTrackBar.Value / 100.0;
+            bool whiteBalance = whiteBalanceCheckBox.Checked;
+
+            // Вызов ApplySettings с параметрами из трекбаров и чекбокса
+            mainForm.ApplySettings(hue, saturation, whiteBalance, brightness, contrast, exposure, sharpness, gamma, backlightCompensation);
+        }
+
 
         private void ButtonApplySettings_Click(object sender, EventArgs e)
         {
-            // Получаем значения настроек из TrackBar и CheckBox
-            double hue = trackBarHue.Value;
-            double saturation = trackBarSaturation.Value;
-            bool whiteBalance = checkBoxWhiteBalance.Checked;
-
-            double brightness = trackBarBrightness.Value;
-            double contrast = trackBarContrast.Value;
-            double exposure = trackBarExposure.Value;
-
-            double sharpness = trackBarSharpness.Value;
-            double gamma = trackBarGamma.Value;
-            double backlightCompensation = trackBarBacklightCompensation.Value;
-
-            mainForm.ApplySettings(hue, saturation, whiteBalance, brightness, contrast, exposure, sharpness, gamma, backlightCompensation);
         }
     }
 }
+

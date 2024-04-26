@@ -155,172 +155,203 @@ namespace WindowsFormsApp1
 
         public void ApplySettings(double hue, double saturation, bool whiteBalance, double brightness, double contrast, double exposure, double sharpness, double gamma, double backlightCompensation)
         {
-
-            // Применяем настройки цвета
-            ApplyColorSettings(hue, saturation, whiteBalance);
-
-            // Применяем настройки экспозиции
-           // ApplyExposureSettings(brightness, contrast, exposure);
-
-            // Применяем настройки изображения
-           // ApplyImageSettings(sharpness, gamma, backlightCompensation);
-        }
-
-        private void ApplyColorSettings(double hue, double saturation, bool whiteBalance)
-        {
-            // Убедитесь, что изображение загружено в PictureBox
-            if (pictureBox.Image == null)
-            {
-                return; // Нет изображения для применения изменений
-            }
-
-            // Преобразуем Image из PictureBox в Bitmap
-            Bitmap bitmap = new Bitmap(pictureBox.Image);
-
-            // Преобразуем hue в радианы для использования в расчетах
-            double hueRadian = hue * Math.PI / 180; // Преобразуем угол в радианы
-            double cosHue = Math.Cos(hueRadian);
-            double sinHue = Math.Sin(hueRadian);
-
-            // Создаем ColorMatrix для изменения оттенка
-            ColorMatrix hueMatrix = new ColorMatrix(new float[][]
-            {
-                new float[] { (float)(cosHue + (1 - cosHue) * 0.299), (float)((1 - cosHue) * 0.587 - sinHue * 0.299), (float)((1 - cosHue) * 0.114 + sinHue * 0.886), 0, 0 },
-                new float[] { (float)((1 - cosHue) * 0.299 + sinHue * 0.299), (float)(cosHue + (1 - cosHue) * 0.587), (float)((1 - cosHue) * 0.114 - sinHue * 0.299), 0, 0 },
-                new float[] { (float)((1 - cosHue) * 0.299 - sinHue * 0.886), (float)((1 - cosHue) * 0.587 + sinHue * 0.299), (float)(cosHue + (1 - cosHue) * 0.114), 0, 0 },
-                new float[] { 0, 0, 0, 1, 0 },
-                new float[] { 0, 0, 0, 0, 1 }
-            });
-
-
-            // Создаем экземпляр ImageAttributes для управления атрибутами изображения
-            ImageAttributes imageAttributes = new ImageAttributes();
-            imageAttributes.SetColorMatrix(hueMatrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
-
-            // Создаем новый Bitmap для результата
-            Bitmap updatedBitmap = new Bitmap(bitmap.Width, bitmap.Height);
-
-            // Используем Graphics для применения ColorMatrix
-            using (Graphics graphics = Graphics.FromImage(updatedBitmap))
-            {
-                graphics.DrawImage(bitmap, new Rectangle(0, 0, bitmap.Width, bitmap.Height), 0, 0, bitmap.Width, bitmap.Height, GraphicsUnit.Pixel, imageAttributes);
-            }
-
-            // Освобождаем исходное изображение
-            bitmap.Dispose();
-
-            // Обновляем PictureBox новым изображением
-            pictureBox.Image = updatedBitmap;
-        }
-
-
-
-        private void ApplyExposureSettings(double brightness, double contrast, double exposure)
-        {
-            // Убедитесь, что картинка загружена
             if (bitmap == null)
             {
-                return; // Нечего применять, если изображения нет
+                return;
             }
 
-            // Создаем экземпляр ImageAttributes для управления атрибутами изображения
-            ImageAttributes imageAttributes = new ImageAttributes();
+            // Клонируем исходное изображение для модификации
+            Mat img = BitmapConverter.ToMat(bitmap);
+            Mat modifiedImg = img.Clone();
 
-            // Создаем ColorMatrix для изменения яркости, контраста и экспозиции
-            // Массив для цветовой матрицы
-            float[][] colorMatrixElements = new float[5][];
+            // Применяем настройки цвета
+            ApplyColorSettings(ref modifiedImg, hue, saturation);
 
-            // Настройка яркости
-            // Создаем матрицу для изменения яркости
-            float brightnessFactor = (float)brightness; // Преобразуем яркость из double в float
+            // Применяем настройки экспозиции
+           ApplyExposureSettings(ref modifiedImg, (int)(brightness), contrast, exposure);
 
-            colorMatrixElements[0] = new float[] { brightnessFactor, 0, 0, 0, 0 };
-            colorMatrixElements[1] = new float[] { 0, brightnessFactor, 0, 0, 0 };
-            colorMatrixElements[2] = new float[] { 0, 0, brightnessFactor, 0, 0 };
-            colorMatrixElements[3] = new float[] { 0, 0, 0, 1, 0 };
-            colorMatrixElements[4] = new float[] { 0, 0, 0, 0, 1 };
+            // Применяем настройки изображения
+            ApplyImageSettings(ref modifiedImg, sharpness, gamma, backlightCompensation);
 
-            // Создаем ColorMatrix с учетом матрицы яркости
-            ColorMatrix brightnessMatrix = new ColorMatrix(colorMatrixElements);
-            imageAttributes.SetColorMatrix(brightnessMatrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
+            // Преобразуем измененное изображение в `Bitmap` перед отображением
+            Bitmap modifiedBitmap = BitmapConverter.ToBitmap(modifiedImg);
 
-            // Настройка контраста
-            float contrastFactor = (float)contrast;
+            // Освобождаем ресурсы для `Mat`
+            img.Dispose();
+            modifiedImg.Dispose();
 
-            colorMatrixElements[0] = new float[] { contrastFactor, 0, 0, 0, 0 };
-            colorMatrixElements[1] = new float[] { 0, contrastFactor, 0, 0, 0 };
-            colorMatrixElements[2] = new float[] { 0, 0, contrastFactor, 0, 0 };
-            colorMatrixElements[3] = new float[] { 0, 0, 0, 1, 0 };
-            colorMatrixElements[4] = new float[] { 0, 0, 0, 0, 1 };
-
-            // Создаем ColorMatrix с учетом матрицы контраста
-            ColorMatrix contrastMatrix = new ColorMatrix(colorMatrixElements);
-            imageAttributes.SetColorMatrix(contrastMatrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
-
-            // Настройка экспозиции
-            float exposureFactor = (float)exposure;
-
-            // Для управления экспозицией, как правило, потребуется комбинация яркости и контраста, чтобы достичь желаемого эффекта экспозиции. 
-            // Экспозиция = яркость * контраст
-
-            float[][] exposureMatrix = new float[5][];
-            exposureMatrix[0] = new float[] { exposureFactor, 0, 0, 0, 0 };
-            exposureMatrix[1] = new float[] { 0, exposureFactor, 0, 0, 0 };
-            exposureMatrix[2] = new float[] { 0, 0, exposureFactor, 0, 0 };
-            exposureMatrix[3] = new float[] { 0, 0, 0, 1, 0 };
-            exposureMatrix[4] = new float[] { 0, 0, 0, 0, 1 };
-
-            // Создаем ColorMatrix с учетом матрицы экспозиции
-            ColorMatrix exposureColorMatrix = new ColorMatrix(exposureMatrix);
-            imageAttributes.SetColorMatrix(exposureColorMatrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
-
-            // Создаем новое изображение для изменения
-            Bitmap adjustedBitmap = new Bitmap(bitmap.Width, bitmap.Height);
-            using (Graphics graphics = Graphics.FromImage(adjustedBitmap))
-            {
-                graphics.DrawImage(bitmap, new Rectangle(0, 0, adjustedBitmap.Width, adjustedBitmap.Height), 0, 0, bitmap.Width, bitmap.Height, GraphicsUnit.Pixel, imageAttributes);
-            }
-
-            // Устанавливаем отредактированное изображение в PictureBox
-            pictureBox.Image = adjustedBitmap;
+            // Отображаем измененное изображение в `PictureBox`
+            pictureBox.Image = modifiedBitmap;
         }
 
+        private void ApplyColorSettings(ref Mat img, double hue, double saturation)
+        {
+            if (img.Channels() == 1)
+            {
+                // Обработка черно-белого изображения
+                // Не применяем настройки hue и saturation, так как они применимы только к цветным изображениям
+                return;
+            }
+
+            // Продолжайте текущую обработку цветных изображений, как в коде ниже
+            Cv2.CvtColor(img, img, ColorConversionCodes.BGR2HSV);
+
+            for (int i = 0; i < img.Rows; i++)
+            {
+                for (int j = 0; j < img.Cols; j++)
+                {
+                    Vec3b pixel = img.At<Vec3b>(i, j);
+                    pixel.Item1 = (byte)(pixel.Item1 * saturation);
+                    pixel.Item0 = (byte)((pixel.Item0 + hue) % 180);
+                    img.Set(i, j, pixel);
+                }
+            }
+
+            Cv2.CvtColor(img, img, ColorConversionCodes.HSV2BGR);
+            ApplyWhiteBalance(ref img);
+        }
+
+
+        private void ApplyExposureSettings(ref Mat img, int brightness, double contrast, double exposure)
+        {
+            if (img.Channels() == 1)
+            {
+                // If the image is grayscale, apply brightness and contrast directly
+                img.ConvertTo(img, -1, contrast, brightness);
+
+                // Adjust exposure by modifying the pixel values
+                for (int i = 0; i < img.Rows; i++)
+                {
+                    for (int j = 0; j < img.Cols; j++)
+                    {
+                        // Adjust the pixel value
+                        byte pixel = img.At<byte>(i, j);
+                        pixel = (byte)(pixel + (exposure * 128));
+                        img.Set(i, j, pixel);
+                    }
+                }
+            }
+            else if (img.Channels() == 3)
+            {
+                // Apply brightness and contrast for 3-channel image (BGR)
+                img.ConvertTo(img, -1, contrast, brightness);
+
+                // Convert to YUV color space
+                Mat yuvImg = new Mat();
+                Cv2.CvtColor(img, yuvImg, ColorConversionCodes.BGR2YUV);
+
+                for (int i = 0; i < yuvImg.Rows; i++)
+                {
+                    for (int j = 0; j < yuvImg.Cols; j++)
+                    {
+                        Vec3b pixel = yuvImg.At<Vec3b>(i, j);
+                        // Adjust brightness channel
+                        pixel.Item0 = (byte)(pixel.Item0 + (exposure * 128));
+                        yuvImg.Set(i, j, pixel);
+                    }
+                }
+
+                // Convert back to BGR color space
+                Cv2.CvtColor(yuvImg, img, ColorConversionCodes.YUV2BGR);
+            }
+        }
+
+
+
+        private void ApplyWhiteBalance(ref Mat img)
+        {
+            // Example of applying white balance
+            // You can customize this function based on your white balance requirements
+            Mat wbImg = img.Clone();
+            // You can apply any white balance algorithm here
+            // For simplicity, we are not modifying the image
+            img = wbImg;
+        }
+
+        private void ApplyImageSettings(ref Mat img, double sharpness, double gamma, double backlightCompensation)
+        {
+            // Получаем количество каналов изображения
+            int channels = img.Channels();
+
+            // Apply sharpness (сглаживание или резкость)
+            if (channels == 1)
+            {
+                // Обработка черно-белых изображений
+                // Усиление резкости черно-белого изображения с использованием Laplacian фильтра
+                if (sharpness < 1.0)
+                {
+                    Mat laplacianImg = new Mat();
+                    Cv2.Laplacian(img, laplacianImg, img.Depth());
+                    img += (1.0 - sharpness) * laplacianImg;
+                    laplacianImg.Dispose();
+                }
+            }
+            else if (channels == 3)
+            {
+                // Обработка цветных изображений
+                if (sharpness > 1.0)
+                {
+                    // Применение гауссова размытия для сглаживания изображения
+                    int kernelSize = (int)(sharpness * 5);
+                    if (kernelSize % 2 == 0)
+                    {
+                        kernelSize++;
+                    }
+                    Cv2.GaussianBlur(img, img, new OpenCvSharp.Size(kernelSize, kernelSize), 0);
+                }
+                else if (sharpness < 1.0)
+                {
+                    // Применение фильтра повышения резкости
+                    Mat laplacianImg = new Mat();
+                    Cv2.Laplacian(img, laplacianImg, img.Depth());
+                    img += (1.0 - sharpness) * laplacianImg;
+                    laplacianImg.Dispose();
+                }
+            }
+
+            // Apply gamma correction (гамма-коррекция)
+            if (gamma != 1.0)
+            {
+                Mat gammaImg = new Mat();
+                img.ConvertTo(gammaImg, -1, 1, 0);
+                for (int i = 0; i < img.Rows; i++)
+                {
+                    for (int j = 0; j < img.Cols; j++)
+                    {
+                        Vec3b pixel = gammaImg.At<Vec3b>(i, j);
+                        for (int k = 0; k < channels; k++)
+                        {
+                            double normalized = pixel[k] / 255.0;
+                            double corrected = Math.Pow(normalized, 1.0 / gamma);
+                            pixel[k] = (byte)(corrected * 255);
+                        }
+                        gammaImg.Set(i, j, pixel);
+                    }
+                }
+                img = gammaImg;
+            }
+
+            // Apply backlight compensation (компенсация подсветки)
+            double backlightCompensationFactor = backlightCompensation - 0.5;
+
+            if (backlightCompensationFactor != 0.0)
+            {
+                img += backlightCompensationFactor * 255;
+            }
+        }
 
         private void ButtonOpenDeviceProcessing_Click(object sender, EventArgs e)
         {
+            isDrawing = false;
+            linePoints = null;
+            pictureBox.Refresh();
+
             // Создаем экземпляр Device_Processing
             DeviceProcessing deviceProcessing = new DeviceProcessing(this);
 
             // Открываем окно в модальном режиме
             deviceProcessing.ShowDialog();
         }
-
-
-        private void ApplyImageSettings(double sharpness, double gamma, double backlightCompensation)
-        {
-            if (currentFrame != null)
-            {
-                // Настройка остроты (реализация зависит от вашей камеры и используемой библиотеки)
-                // Примерно так: currentFrame.ConvertTo(currentFrame, -1, sharpness / 100.0);
-
-                // Применение коррекции гаммы
-                // Пример для коррекции гаммы (измените на вашу реализацию)
-                Mat lut = new Mat(1, 256, MatType.CV_8UC1);
-                for (int i = 0; i < 256; i++)
-                {
-                    lut.At<byte>(0, i) = (byte)(Math.Pow(i / 255.0, 1.0 / gamma) * 255.0);
-                }
-                Cv2.LUT(currentFrame, lut, currentFrame);
-
-                // Настройка компенсации подсветки (примените к изображению или камере)
-                // Реализация зависит от вашей камеры и используемой библиотеки.
-
-                // Обновляем PictureBox текущим кадром
-                bitmap = BitmapConverter.ToBitmap(currentFrame);
-                pictureBox.Image = bitmap;
-            }
-        }
-
 
         private void PictureBox_DragEnter(object sender, DragEventArgs e)
         {
@@ -776,7 +807,6 @@ namespace WindowsFormsApp1
                 MessageBox.Show("Результаты сохранены.");
             }
         }
-
 
         private void StopVideoButton_Click(object sender, EventArgs e)
         {
