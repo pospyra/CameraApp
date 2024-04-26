@@ -546,11 +546,16 @@ namespace WindowsFormsApp1
             bgWorker.DoWork += (sender, e) =>
             {
                 int cameraIndex = GetCameraIndex(cameraName);
-                string rootPath = Directory.GetParent(
-                    Directory.GetParent(
-                        Directory.GetParent(Directory.GetCurrentDirectory()).FullName
-                    ).FullName
-                ).FullName;
+
+                //debug
+                //string rootPath = Directory.GetParent(
+                //    Directory.GetParent(
+                //        Directory.GetParent(Directory.GetCurrentDirectory()).FullName
+                //    ).FullName
+                //).FullName;
+
+                //release
+                string rootPath = Directory.GetCurrentDirectory();
 
                 string filesPath = Path.Combine(rootPath, "Files");
 

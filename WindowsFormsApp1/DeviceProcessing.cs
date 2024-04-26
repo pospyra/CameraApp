@@ -59,6 +59,54 @@ namespace WindowsFormsApp1
             CreateImageTab();
 
             Controls.Add(tabControl);
+
+            Button resetButton = new Button
+            {
+                Text = "Значения по умолчанию",
+                Width = 150
+            };
+
+            int panelBottom = tabControl.Bottom;
+            resetButton.Top = panelBottom + 20; 
+            resetButton.Left = tabControl.Left;
+
+            resetButton.Click += ResetButton_Click;
+            Controls.Add(resetButton);
+        }
+
+        private void ResetButton_Click(object sender, EventArgs e)
+        {
+            // Цвет
+            hueTrackBar.Value = 0;
+            hueNumericUpDown.Value = 0;
+
+            saturationTrackBar.Value = 100;
+            saturationNumericUpDown.Value = 100;
+
+            whiteBalanceCheckBox.Checked = false;
+
+            // Экспозиция
+            brightnessTrackBar.Value = 50;
+            brightnessNumericUpDown.Value = 50;
+
+            contrastTrackBar.Value = 50;
+            contrastNumericUpDown.Value = 50;
+
+            exposureTrackBar.Value = 0;
+            exposureNumericUpDown.Value = 0;
+
+            // Изображение
+            sharpnessTrackBar.Value = 100;
+            sharpnessNumericUpDown.Value = 100;
+
+            gammaTrackBar.Value = 100;
+            gammaNumericUpDown.Value = 100;
+
+            backlightCompensationTrackBar.Value = 50;
+            backlightCompensationNumericUpDown.Value = 50;
+
+            // Применяем настройки с начальными значениями
+            ApplySettings();
         }
 
         private void CreateColorTab()
