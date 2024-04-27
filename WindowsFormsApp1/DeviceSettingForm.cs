@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
-using DirectShowLib;
 
 namespace WindowsFormsApp1
 {
@@ -11,7 +10,7 @@ namespace WindowsFormsApp1
         public string SelectedFormat { get; private set; }
         public int SelectedFPS { get; private set; }
 
-        private Dictionary<int, string> availableCameras;
+        private static Dictionary<int, string> availableCameras;
 
         // Словарь для хранения поддерживаемых форматов камеры
         private Dictionary<int, List<(int width, int height, int fps, string format)>> cameraFormats;

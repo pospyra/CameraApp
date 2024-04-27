@@ -8,20 +8,16 @@ public class CameraUtility
 {
     private static CameraUtility _instance;
 
-    // Статический словарь для хранения списка доступных камер.
     private static Dictionary<int, string> cameraDict;
 
-    // Конструктор класса CameraUtility.
     private CameraUtility()
     {
-        // Инициализируем камеры только один раз.
         if (cameraDict == null)
         {
             InitializeCameras();
         }
     }
 
-    // Свойство для доступа к единственному экземпляру класса.
     public static CameraUtility Instance
     {
         get

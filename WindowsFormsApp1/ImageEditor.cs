@@ -1,9 +1,5 @@
 ﻿using OpenCvSharp;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace WindowsFormsApp1
 {
@@ -40,9 +36,11 @@ namespace WindowsFormsApp1
 
         public void ApplyWhiteBalance(ref Mat img)
         {
-            
-            Mat wbImg = img.Clone();
-            img = wbImg;
+            if (img.Channels() != 3)
+            {
+                throw new ArgumentException("Изображение должно быть цветным (3 канала)");
+            }
+            return;
         }
 
         public void ApplyExposureSettings(ref Mat img, int brightness, double contrast, double exposure)
