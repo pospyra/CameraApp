@@ -36,12 +36,47 @@ namespace WindowsFormsApp1
 
         public void ApplyWhiteBalance(ref Mat img)
         {
-            if (img.Channels() != 3)
+            Cv2.CvtColor(img, img, ColorConversionCodes.BGR2Lab);
+
+            Scalar meanLAB = Cv2.Mean(img);
+            double meanL = meanLAB.Val0;
+            double meanA = meanLAB.Val1;
+            double meanB = meanLAB.Val2;
+
+            double targetA = 128;
+            double targetB = 128;
+
+            double shiftA = targetA - meanA;
+            double shiftB = targetB - meanB;
+
+            for (int i = 0; i < img.Rows; i++)
             {
-                throw new ArgumentException("Изображение должно быть цветным (3 канала)");
+                for (int j = 0; j < img.Cols; j++)
+                {
+                    Vec3b pixel = img.At<Vec3b>(i, j);
+
+                    pixel.Item1 = Clamp((byte)(pixel.Item1 + shiftA), 0, 255);
+                    pixel.Item2 = Clamp((byte)(pixel.Item2 + shiftB), 0, 255);
+                    img.Set(i, j, pixel);
+                }
             }
-            return;
+
+            Cv2.CvtColor(img, img, ColorConversionCodes.Lab2BGR);
         }
+
+        public static byte Clamp(byte value, byte min, byte max)
+        {
+            if (value < min)
+            {
+                return min;
+            }
+            else if (value > max)
+            {
+                return max;
+            }
+            return value;
+        }
+
 
         public void ApplyExposureSettings(ref Mat img, int brightness, double contrast, double exposure)
         {
