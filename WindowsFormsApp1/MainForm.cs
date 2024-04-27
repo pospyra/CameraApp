@@ -25,14 +25,17 @@ namespace WindowsFormsApp1
         private Button buttonOpenDeviceProcessing;
         private Button buttonStartCamera;
         private Button stopVideoButton;
-        private Button buttonDisplayGraph;
-        private Button buttonCalculateContrast;
+
+        //private Button buttonDisplayGraph;
+        //private Button buttonCalculateContrast;
+
         private Button buttonSaveResults;
         private SplitContainer splitContainer;
         private Label labelResult;
         private Chart chart;
         private bool isContrastCalculated;
         private bool isGraphDisplayed;
+        private bool isCameraActive;
 
         public MainForm()
         {
@@ -116,27 +119,27 @@ namespace WindowsFormsApp1
             stopVideoButton.Enabled = false;
             Controls.Add(stopVideoButton);
 
-            buttonDisplayGraph = new Button
-            {
-                Name = "buttonDisplayGraph",
-                Text = "График распределения яркости",
-                Dock = DockStyle.Top,
-                Margin = new Padding(0, 5, 0, 0)
-            };
-            buttonDisplayGraph.Click += ButtonDisplayGraph_Click;
-            buttonDisplayGraph.Enabled = false;
-            Controls.Add(buttonDisplayGraph);
+            //buttonDisplayGraph = new Button
+            //{
+            //    Name = "buttonDisplayGraph",
+            //    Text = "График распределения яркости",
+            //    Dock = DockStyle.Top,
+            //    Margin = new Padding(0, 5, 0, 0)
+            //};
+            //buttonDisplayGraph.Click += ButtonDisplayGraph_Click;
+            //buttonDisplayGraph.Enabled = false;
+            //Controls.Add(buttonDisplayGraph);
 
-            buttonCalculateContrast = new Button
-            {
-                Name = "buttonCalculateContrast",
-                Text = "Контраст",
-                Dock = DockStyle.Top,
-                Margin = new Padding(0, 5, 0, 0)
-            };
-            buttonCalculateContrast.Click += ButtonCalculateContrast_Click;
-            buttonCalculateContrast.Enabled = false;
-            Controls.Add(buttonCalculateContrast);
+            //buttonCalculateContrast = new Button
+            //{
+            //    Name = "buttonCalculateContrast",
+            //    Text = "Контраст",
+            //    Dock = DockStyle.Top,
+            //    Margin = new Padding(0, 5, 0, 0)
+            //};
+            //buttonCalculateContrast.Click += ButtonCalculateContrast_Click;
+            //buttonCalculateContrast.Enabled = false;
+            //Controls.Add(buttonCalculateContrast);
 
             buttonSaveResults = new Button
             {
@@ -157,6 +160,8 @@ namespace WindowsFormsApp1
                 AutoSize = true
             };
             Controls.Add(labelResult);
+
+            isCameraActive = false;
         }
 
         public void ApplySettings(double hue, double saturation, bool whiteBalance, double brightness, double contrast, double exposure, double sharpness, double gamma, double backlightCompensation)
@@ -171,7 +176,7 @@ namespace WindowsFormsApp1
 
             ImageEditor editor = new ImageEditor();
 
-            editor.ApplyColorSettings(ref modifiedImg, hue, saturation);
+            editor.ApplyColorSettings(ref modifiedImg, hue, saturation, whiteBalance);
             editor.ApplyExposureSettings(ref modifiedImg, (int)(brightness), contrast, exposure);
             editor.ApplyImageSettings(ref modifiedImg, sharpness, gamma, backlightCompensation);
 
@@ -183,26 +188,30 @@ namespace WindowsFormsApp1
             pictureBox.Image = modifiedBitmap;
         }
 
-        //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        private void ApplyWhiteBalance(ref Mat img)
-        {
-            Mat wbImg = img.Clone();
-            img = wbImg;
-        }
-
         private void ButtonOpenDeviceProcessing_Click(object sender, EventArgs e)
         {
             isDrawing = false;
             linePoints = null;
             pictureBox.Refresh();
 
+            if (chart != null)
+            {
+                chart.Series.Clear();
+            }
             DeviceProcessing deviceProcessing = new DeviceProcessing(this);
             deviceProcessing.ShowDialog();
         }
 
         private void ButtonLoadImage_Click(object sender, EventArgs e)
         {
-            CameraUtility.Instance.ReleaseCameraAndTimer(cameraTimer, videoCapture);
+            isCameraActive = false;
+
+            if (cameraTimer != null)
+            {
+                cameraTimer.Stop();
+                cameraTimer.Dispose();
+                cameraTimer = null;
+            }
 
             pictureBox.Image = null;
             if (chart != null)
@@ -229,8 +238,8 @@ namespace WindowsFormsApp1
                 bitmap = new Bitmap(openFileDialog.FileName);
                 pictureBox.Image = bitmap;
 
-                buttonCalculateContrast.Enabled = true;
-                buttonDisplayGraph.Enabled = true;
+                //buttonCalculateContrast.Enabled = true;
+                //buttonDisplayGraph.Enabled = true;
 
                 stopVideoButton.Enabled = false;
                 buttonSaveResults.Enabled = false;
@@ -240,13 +249,27 @@ namespace WindowsFormsApp1
             {
                 buttonOpenDeviceProcessing.Enabled = true;
             }
+
+            if (linePoints == null || linePoints.Count < 2)
+            {
+
+                if (chart != null)
+                {
+                    chart.Series.Clear();
+                }
+            }
         }
 
         private void ButtonStartCamera_Click(object sender, EventArgs e)
         {
-            // Установка начальных значений
             pictureBox.Image = null;
             labelResult.Text = string.Empty;
+
+            if (cameraTimer != null || videoCapture != null)
+            {
+                CameraUtility.Instance.ReleaseCameraAndTimer(cameraTimer, videoCapture);
+            }
+
             if (chart != null)
             {
                 chart.Series.Clear();
@@ -254,8 +277,8 @@ namespace WindowsFormsApp1
 
             buttonStartCamera.Enabled = false;
             stopVideoButton.Enabled = false;
-            buttonCalculateContrast.Enabled = false;
-            buttonDisplayGraph.Enabled = false;
+            //buttonCalculateContrast.Enabled = false;
+            //buttonDisplayGraph.Enabled = false;
             buttonOpenDeviceProcessing.Enabled = false;
 
             using (var deviceSettingForm = new DeviceSettingForm())
@@ -276,7 +299,7 @@ namespace WindowsFormsApp1
             }
         }
 
-        private void ButtonDisplayGraph_Click(object sender, EventArgs e)
+        private void ButtonDisplayGraph()
         {
             if (bitmap == null)
             {
@@ -325,7 +348,7 @@ namespace WindowsFormsApp1
             buttonSaveResults.Enabled = isGraphDisplayed && isContrastCalculated;
         }
 
-        private void ButtonCalculateContrast_Click(object sender, EventArgs e)
+        private void CalculateContrast()
         {
             if (bitmap == null)
             {
@@ -355,7 +378,7 @@ namespace WindowsFormsApp1
 
             double contrast = (maxBrightness - minBrightness) / maxBrightness;
 
-            labelResult.Text = $"Контраст вдоль линии: {contrast:F10}";
+            labelResult.Text = $"Контраст вдоль линии: {contrast:F3}";
 
             isContrastCalculated = true;
 
@@ -364,13 +387,28 @@ namespace WindowsFormsApp1
 
         private void ButtonSaveResults_Click(object sender, EventArgs e)
         {
+            // Проверка, что изображение загружено, график отображен, и контраст рассчитан
             if (pictureBox.Image == null || splitContainer.Panel2.Controls.OfType<Chart>().FirstOrDefault() == null)
             {
                 MessageBox.Show("Сначала необходимо загрузить изображение и отобразить график");
                 return;
             }
 
+            if (linePoints == null || linePoints.Count == 0)
+            {
+                MessageBox.Show("Сначала необходимо выбрать участок на изображении для линии.");
+                return;
+            }
+
+            if (!isContrastCalculated)
+            {
+                return;
+            }
+
+            // Получение графика из splitContainer
             Chart chart = splitContainer.Panel2.Controls.OfType<Chart>().FirstOrDefault();
+
+            // Продолжение метода, как ранее
             int chartWidth = chart.Width;
             int chartHeight = chart.Height;
 
@@ -388,6 +426,7 @@ namespace WindowsFormsApp1
 
             using (Graphics g = Graphics.FromImage(resultBitmap))
             {
+                // Отрисовка изображения
                 int offsetX = (totalWidth - pictureBoxWidth) / 2;
                 int offsetY = 0;
 
@@ -412,6 +451,7 @@ namespace WindowsFormsApp1
                 chart.DrawToBitmap(chartBitmap, new Rectangle(0, 0, chartWidth, chartHeight));
                 g.DrawImage(chartBitmap, chartOffsetX, chartOffsetY);
 
+                // Отрисовка текста с контрастом и датой
                 Font font = new Font("Arial", 20, FontStyle.Bold);
                 Brush brush = Brushes.Black;
                 string contrastText = labelResult.Text;
@@ -437,6 +477,7 @@ namespace WindowsFormsApp1
             }
         }
 
+
         private void StopVideoButton_Click(object sender, EventArgs e)
         {
             StopVideoAndCaptureImage();
@@ -444,23 +485,33 @@ namespace WindowsFormsApp1
             if (pictureBox.Image != null)
             {
                 buttonOpenDeviceProcessing.Enabled = true;
+                isCameraActive = false;
             }
         }
 
         private void PictureBox_MouseDown(object sender, MouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Left && bitmap != null)
+            if (isCameraActive)
+            {
+                return; 
+            }
+
+            if (e.Button == MouseButtons.Left && (bitmap != null || currentFrame != null))
             {
                 isDrawing = true;
-                linePoints = new List<System.Drawing.Point>();
-                linePoints.Add(e.Location);
+                linePoints = new List<System.Drawing.Point> { e.Location };
                 pictureBox.Refresh();
             }
         }
 
         private void PictureBox_MouseMove(object sender, MouseEventArgs e)
         {
-            if (isDrawing)
+            if (isCameraActive)
+            {
+                return;
+            }
+
+            if (isDrawing && (bitmap != null || currentFrame != null))
             {
                 (double transformedX, double transformedY) = TransformPointToImage(e.Location);
 
@@ -469,6 +520,12 @@ namespace WindowsFormsApp1
                     isDrawing = false;
                     linePoints = null;
                     pictureBox.Refresh();
+                    labelResult.Text = string.Empty;
+                    if (chart != null)
+                    {
+                        chart.Series.Clear();
+                    }
+                    
                     MessageBox.Show("Вы вышли за границы изображения. Линия была обнулена.");
                     return;
                 }
@@ -485,14 +542,19 @@ namespace WindowsFormsApp1
 
         private void PictureBox_MouseUp(object sender, MouseEventArgs e)
         {
+            if (isCameraActive)
+            {
+                return;
+            }
+
             if (isDrawing)
             {
                 isDrawing = false;
                 linePoints.Add(e.Location);
 
-                ButtonDisplayGraph_Click(sender, e);
+                ButtonDisplayGraph();
 
-                ButtonCalculateContrast_Click(sender, e);
+                CalculateContrast();
             }
         }
 
@@ -519,8 +581,8 @@ namespace WindowsFormsApp1
                     bitmap = new Bitmap(filePath);
                     pictureBox.Image = bitmap;
 
-                    buttonCalculateContrast.Enabled = true;
-                    buttonDisplayGraph.Enabled = true;
+                    //buttonCalculateContrast.Enabled = true;
+                    //buttonDisplayGraph.Enabled = true;
 
                     stopVideoButton.Enabled = false;
                 }
@@ -541,43 +603,23 @@ namespace WindowsFormsApp1
 
         private void InitializeCamera(string cameraName, string videoFormat, int fps)
         {
+            // Устанавливаем флаг активности камеры
+            isCameraActive = true;
+
+            // Создаем новый фоновый поток
             BackgroundWorker bgWorker = new BackgroundWorker();
 
             bgWorker.DoWork += (sender, e) =>
             {
                 int cameraIndex = GetCameraIndex(cameraName);
 
-                //debug
-                //string rootPath = Directory.GetParent(
-                //    Directory.GetParent(
-                //        Directory.GetParent(Directory.GetCurrentDirectory()).FullName
-                //    ).FullName
-                //).FullName;
+                // Устанавливаем изображение загрузки
+                SetLoadingImage();
 
-                //release
-                string rootPath = Directory.GetCurrentDirectory();
-
-                string filesPath = Path.Combine(rootPath, "Files");
-
-                if (!Directory.Exists(filesPath))
-                {
-                    Invoke(new Action(() => MessageBox.Show("Папка Files не найдена в корневой папке проекта.")));
-                }
-                else
-                {
-                    string shareImagePath = Path.Combine(filesPath, "loading.gif");
-                    try
-                    {
-                        Invoke(new Action(() => pictureBox.Image = Image.FromFile(shareImagePath)));
-                    }
-                    catch (Exception ex)
-                    {
-                        Invoke(new Action(() => MessageBox.Show($"Ошибка: не удалось загрузить изображение 'loading.gif': {ex.Message}")));
-                    }
-                }
-
+                // Инициализируем новую камеру
                 videoCapture = new VideoCapture(cameraIndex);
 
+                // Проверка открытия камеры
                 if (!videoCapture.IsOpened())
                 {
                     Invoke(new Action(() => MessageBox.Show($"Камера '{cameraName}' не найдена. Пожалуйста, убедитесь, что камера подключена и попробуйте снова.")));
@@ -585,13 +627,16 @@ namespace WindowsFormsApp1
                     return;
                 }
 
+                // Устанавливаем FPS для камеры
                 videoCapture.Fps = fps;
 
+                // Устанавливаем формат камеры, если он задан
                 if (!string.IsNullOrEmpty(videoFormat) && videoFormat.Length >= 4)
                 {
                     videoCapture.Set(VideoCaptureProperties.FourCC, VideoWriter.FourCC(videoFormat[0], videoFormat[1], videoFormat[2], videoFormat[3]));
                 }
 
+                // Настройка и запуск таймера камеры
                 Invoke(new Action(() =>
                 {
                     cameraTimer = new Timer
@@ -600,17 +645,37 @@ namespace WindowsFormsApp1
                     };
                     cameraTimer.Tick += CameraTimer_Tick;
                     cameraTimer.Start();
+
+                    // Обновление интерфейса
                     buttonStartCamera.Enabled = true;
                     stopVideoButton.Enabled = true;
-                    buttonCalculateContrast.Enabled = false;
-                    buttonDisplayGraph.Enabled = false;
+                    //buttonCalculateContrast.Enabled = false;
+                    //buttonDisplayGraph.Enabled = false;
                     buttonOpenDeviceProcessing.Enabled = true;
 
+                    // Очищаем текущий вид PictureBox
                     pictureBox.Image = null;
                 }));
             };
 
+            // Запускаем фоновый поток
             bgWorker.RunWorkerAsync();
+        }
+
+        // Метод для установки изображения загрузки
+        private void SetLoadingImage()
+        {
+            string loadingImagePath = Path.Combine(Directory.GetCurrentDirectory(), "Files", "loading.gif");
+
+            if (File.Exists(loadingImagePath))
+            {
+                // Устанавливаем изображение загрузки в PictureBox
+                Invoke(new Action(() => pictureBox.Image = Image.FromFile(loadingImagePath)));
+            }
+            else
+            {
+                Invoke(new Action(() => MessageBox.Show("Изображение loading.gif не найдено.")));
+            }
         }
 
         private int GetCameraIndex(string cameraName)
@@ -672,8 +737,8 @@ namespace WindowsFormsApp1
 
                 stopVideoButton.Enabled = false;
 
-                buttonCalculateContrast.Enabled = true;
-                buttonDisplayGraph.Enabled = true;
+                //buttonCalculateContrast.Enabled = true;
+                //buttonDisplayGraph.Enabled = true;
             }
             else
             {

@@ -8,14 +8,20 @@ public class CameraUtility
 {
     private static CameraUtility _instance;
 
-    private Dictionary<int, string> cameraDict;
+    // Статический словарь для хранения списка доступных камер.
+    private static Dictionary<int, string> cameraDict;
 
+    // Конструктор класса CameraUtility.
     private CameraUtility()
     {
-        cameraDict = new Dictionary<int, string>();
-        InitializeCameras();
+        // Инициализируем камеры только один раз.
+        if (cameraDict == null)
+        {
+            InitializeCameras();
+        }
     }
 
+    // Свойство для доступа к единственному экземпляру класса.
     public static CameraUtility Instance
     {
         get
@@ -31,6 +37,8 @@ public class CameraUtility
     private void InitializeCameras()
     {
         DsDevice[] videoDevices = DsDevice.GetDevicesOfCat(FilterCategory.VideoInputDevice);
+
+        cameraDict = new Dictionary<int, string>();
 
         for (int i = 0; i < videoDevices.Length; i++)
         {
@@ -59,9 +67,11 @@ public class CameraUtility
 
         if (videoCapture != null)
         {
-            videoCapture.Release();
+            if (!videoCapture.IsDisposed)
+            {
+                videoCapture.Release();
+            }
             videoCapture.Dispose();
-            videoCapture = null;
         }
     }
 }

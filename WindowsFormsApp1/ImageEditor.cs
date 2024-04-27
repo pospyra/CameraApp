@@ -10,7 +10,7 @@ namespace WindowsFormsApp1
 
     public class ImageEditor
     {
-        public void ApplyColorSettings(ref Mat img, double hue, double saturation)
+        public void ApplyColorSettings(ref Mat img, double hue, double saturation, bool whiteBalance)
         {
             if (img.Channels() == 1)
             {
@@ -31,13 +31,16 @@ namespace WindowsFormsApp1
             }
 
             Cv2.CvtColor(img, img, ColorConversionCodes.HSV2BGR);
-            ApplyWhiteBalance(ref img);
+
+            if (whiteBalance)
+            {
+                ApplyWhiteBalance(ref img);
+            }
         }
 
         public void ApplyWhiteBalance(ref Mat img)
         {
-            // Ваш код для применения белого баланса (просто пример, логика может быть другой)
-            // Пример: клонирование изображения и присваивание оригинальному изображению результата клонирования
+            
             Mat wbImg = img.Clone();
             img = wbImg;
         }
